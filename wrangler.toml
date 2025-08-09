@@ -1,0 +1,10 @@
+name = "ma-galerie"
+main = "dist/_worker.js"
+compatibility_date = "2025-08-09"
+
+# Serve Astro’s built static assets alongside the Worker
+assets = { directory = "dist/client" }
+
+# Optional: set bindings/env as needed
+#[vars]
+#PUBLIC_SOME_VALUE = "..."
