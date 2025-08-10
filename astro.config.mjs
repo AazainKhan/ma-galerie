@@ -1,7 +1,6 @@
+import cloudflare from "@astrojs/cloudflare";
 import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
-import cloudflare from "@astrojs/cloudflare";
-
 
 export default defineConfig({
   site: "https://mysite.com",

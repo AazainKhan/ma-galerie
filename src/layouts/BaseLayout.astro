@@ -4,7 +4,7 @@ import "~/styles/base.css";
 
 import smartypants from "smartypants";
 
-const siteName = "Astro Photo Grid";
+const siteName = "Ma Galerie";
 
 export interface Props {
   title: string;
@@ -17,11 +17,16 @@ export interface Props {
 
 const { title, description, image } = Astro.props;
 
+// Read persisted theme from cookie so SSR can render correct theme without flash/reset
+const themeCookie = Astro.cookies.get("theme")?.value;
+const initialTheme =
+  themeCookie === "dark" || themeCookie === "light" ? themeCookie : undefined;
+
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`;
 ---
 
-<html lang="en">
+<html lang="en" data-theme={initialTheme} style={initialTheme ? `color-scheme: ${initialTheme}` : undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -44,8 +49,141 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
         </>
       )
     }
+    {/* Set initial theme before paint to avoid flash (no-op if SSR already set) */}
+    <script is:inline>
+      {`(function(){try{var root=document.documentElement;if(root.dataset&&root.dataset.theme){return;}var k='theme';var s=localStorage.getItem(k);var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var t=(s==='dark'||s==='light')?s:m;root.dataset.theme=t;root.style.colorScheme=t;}catch(e){}})();`}
+    </script>
   </head>
   <body>
+    <header class="site-header">
+      <nav class="nav">
+        <div class="brand"><a href="/">Ma Galerie</a></div>
+        <div class="spacer" />
+        <ul class="links" role="list">
+          <li><a href="/">Home</a></li>
+          <li><a href="/albums">Albums</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+        <button id="menu-toggle" class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu" title="Open menu">
+          <span class="sr-only">Open menu</span>
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6h16" />
+            <path d="M4 12h16" />
+            <path d="M4 18h16" />
+          </svg>
+        </button>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <span class="sr-only">Toggle theme</span>
+          <svg
+            class="icon-sun"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2" />
+            <path d="M12 20v2" />
+            <path d="m4.93 4.93 1.41 1.41" />
+            <path d="m17.66 17.66 1.41 1.41" />
+            <path d="M2 12h2" />
+            <path d="M20 12h2" />
+            <path d="m6.34 17.66-1.41 1.41" />
+            <path d="m19.07 4.93-1.41 1.41" />
+          </svg>
+          <svg
+            class="icon-moon"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+          </svg>
+        </button>
+      </nav>
+
+      <!-- Mobile menu panel -->
+      <div id="mobile-menu" class="mobile-menu" hidden>
+        <ul class="links" role="list">
+          <li><a href="/">Home</a></li>
+          <li><a href="/albums">Albums</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+    </header>
+
     <slot />
+
+    <script>
+      const STORAGE_KEY = "theme";
+      const desktopThemeBtn = document.getElementById("theme-toggle");
+      const mobileThemeBtn = document.getElementById("theme-toggle-mobile");
+      const themeButtons = [desktopThemeBtn, mobileThemeBtn].filter(Boolean);
+
+      function setTheme(theme: "light" | "dark") {
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        try {
+          localStorage.setItem(STORAGE_KEY, theme);
+        } catch (_) {}
+        // Also persist to cookie so server can SSR the correct theme on next navigation/reload
+        try {
+          document.cookie = `theme=${theme}; path=/; max-age=31536000; samesite=lax`;
+        } catch (_) {}
+      }
+
+      function toggleTheme() {
+        const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+        const next = current === "dark" ? "light" : "dark";
+        setTheme(next);
+        themeButtons.forEach((b: Element | null) => {
+          if (b) (b as HTMLElement).setAttribute("aria-label", next === "dark" ? "Switch to light mode" : "Switch to dark mode");
+        });
+      }
+
+      themeButtons.forEach((b: Element | null) => {
+        b?.addEventListener("click", toggleTheme);
+      });
+
+      // Mobile menu
+      const menuBtn = document.getElementById("menu-toggle");
+      const mobileMenu = document.getElementById("mobile-menu");
+
+      function openMenu(open: boolean) {
+        if (!menuBtn || !mobileMenu) return;
+        menuBtn.setAttribute("aria-expanded", String(open));
+        mobileMenu.classList.toggle("open", open);
+        if (open) mobileMenu.removeAttribute("hidden"); else mobileMenu.setAttribute("hidden", "");
+        document.documentElement.classList.toggle("no-scroll", open);
+      }
+
+      menuBtn?.addEventListener("click", () => {
+        const isOpen = menuBtn.getAttribute("aria-expanded") === "true";
+        openMenu(!isOpen);
+      });
+
+      mobileMenu?.querySelectorAll("a").forEach((a) =>
+        a.addEventListener("click", () => openMenu(false))
+      );
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") openMenu(false);
+      });
+    </script>
   </body>
 </html>
