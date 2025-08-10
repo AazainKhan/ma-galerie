@@ -17,19 +17,33 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
+    "@astrojs/react": "^4.3.0",
     "@astrojs/sitemap": "^3.4.1",
     "@fancyapps/ui": "^6.0.17",
+    "@radix-ui/react-tooltip": "^1.2.7",
+    "@react-spring/shared": "^10.0.1",
+    "@react-spring/web": "^10.0.1",
+    "@types/react": "^19.1.9",
+    "@use-gesture/react": "^10.3.1",
     "astro": "^5.12.3",
+    "framer-motion": "^12.23.12",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "smartypants": "^0.2.2",
     "typescript": "^5.8.3"
   },
   "devDependencies": {
     "@astrojs/cloudflare": "^12.6.3",
     "@biomejs/biome": "^2.1.2",
+    "@tailwindcss/postcss": "^4.1.11",
+    "autoprefixer": "^10.4.21",
     "husky": "^9.1.7",
+    "postcss": "^8.5.6",
+    "sass": "^1.90.0",
     "sharp": "^0.34.3",
     "stylelint": "^16.22.0",
     "stylelint-config-astro": "^1.0.4",
-    "stylelint-config-standard": "^38.0.0"
+    "stylelint-config-standard": "^38.0.0",
+    "tailwindcss": "^4.1.11"
   }
 }

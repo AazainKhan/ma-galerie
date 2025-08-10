@@ -1,0 +1,93 @@
+.dock {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: flex-end;
+  height: 58px;
+  display: flex;
+  padding: 10px;
+  padding-bottom: 6px;
+  gap: 12px;
+  background-color: rgba(0, 0, 0, 0.92);
+  will-change: contents;
+  box-sizing: content-box;
+  border-radius: 14px;
+  transform-origin: center bottom;
+  /* Ensure no default image borders in some browsers */
+  img { border: 0; }
+}
+
+.dock-card {
+  /* Transparent button so the icon itself is the visual element */
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  border-radius: 0;
+  transition: transform 120ms ease;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.dock-card:focus,
+.dock-card:focus-visible,
+.dock-card:active {
+  outline: none;
+  box-shadow: none;
+}
+
+.dock-card > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.dock-card > img:focus,
+.dock-card > img:focus-visible,
+.dock-card > img:active {
+  outline: none;
+  box-shadow: none;
+}
+
+.dock-card-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dock-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #fff;
+}
+
+.divider {
+  width: 1px;
+  height: 100%;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.1);
+
+  &__container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+
+    &:hover {
+      cursor: ns-resize;
+    }
+  }
+}

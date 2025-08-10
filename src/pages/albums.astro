@@ -1,0 +1,16 @@
+---
+import DockApp from "~/components/DockApp";
+import BaseLayout from "~/layouts/BaseLayout.astro";
+
+// DockApp no longer takes items; the icons are mocked internally for the demo
+---
+
+<BaseLayout title="Albums" description="Explore photo albums with a Mac dock.">
+	<main style="min-height: 70vh; display: grid; place-items: center;">
+		<h1 style="font-size: clamp(24px, 5vw, 56px); opacity: .8;">Albums</h1>
+	</main>
+
+	{/* React island dock at the bottom */}
+	<DockApp client:only="react" />
+</BaseLayout>
+

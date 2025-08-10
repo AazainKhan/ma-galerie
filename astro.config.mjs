@@ -1,13 +1,14 @@
 import cloudflare from "@astrojs/cloudflare";
+import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
-  site: "https://mysite.com",
+  site: "https://aazainkhan.com",
   devToolbar: {
     enabled: false,
   },
-  integrations: [sitemap()],
+  integrations: [react(), sitemap()],
   prefetch: true,
   vite: {
     ssr: {
