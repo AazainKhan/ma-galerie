@@ -50,8 +50,8 @@ export default function DockApp() {
 
   return (
     <>
-      {/* Fixed, centered dock for desktop */}
-      <div className="hidden sm:block fixed bottom-3 left-1/2 -translate-x-1/2 z-50">
+      {/* Fixed, centered dock for desktop (scale up on ≥1920px) */}
+      <div className="hidden sm:block fixed bottom-3 left-1/2 -translate-x-1/2 z-50 min-[1920px]:bottom-5">
         <motion.div
           onMouseMove={(e) => {
             const { left, right } = e.currentTarget.getBoundingClientRect();
@@ -64,10 +64,10 @@ export default function DockApp() {
             mouseLeft.set(-Infinity);
             mouseRight.set(-Infinity);
           }}
-          className="relative mx-auto flex h-20 w-fit items-end gap-3 px-3 pb-3"
+          className="relative mx-auto flex h-20 w-fit items-end gap-3 px-3 pb-3 min-[1920px]:h-24 min-[1920px]:gap-4 min-[1920px]:px-4 min-[1920px]:pb-4"
         >
           <motion.div
-            className="absolute inset-y-0 -z-10 rounded-2xl bg-gray-700/90 border border-gray-600"
+            className="absolute inset-y-0 -z-10 rounded-2xl bg-gray-700/90 border border-gray-600 min-[1920px]:rounded-3xl"
             style={{ left: safeLeft, right: safeRight }}
           />
 
@@ -114,11 +114,11 @@ export default function DockApp() {
       {/* 3x3 Grid for screens 640px and smaller */}
       <div className="block min-[641px]:hidden">
         <div className="grid-dock">
-          <div className="grid grid-cols-3 gap-3 p-4">
+          <div className="grid grid-cols-3 gap-3 p-4 min-[1920px]:gap-4 min-[1920px]:p-5">
             {Array.from(Array(9).keys()).map((i) => (
               <div
                 key={i}
-                className="aspect-square w-14 overflow-hidden rounded-lg"
+                className="aspect-square w-14 overflow-hidden rounded-lg min-[1920px]:w-16"
               >
                 <img
                   src="/icons/macos-folder-original.png"

@@ -1,5 +1,5 @@
 @font-face {
-  font-family: "Michroma";
+  font-family: Michroma;
   src: url("/fonts/Michroma-Regular.woff2") format("woff2");
   font-weight: normal;
   font-style: normal;
@@ -8,7 +8,7 @@
 
 /* PPEditorialNew Ultralight Italic for nav links */
 @font-face {
-  font-family: "PPEditorialNew";
+  font-family: PPEditorialNew;
   src: url("/fonts/PPEditorialNew-Ultralight.woff2") format("woff2");
   font-weight: 200;
   font-display: swap;
@@ -16,45 +16,49 @@
 
 :root {
   color-scheme: light dark;
-  --bg: #ffffff;
+
+  --bg: #fff;
   --bg-dark: #0b0b0b;
-  --outline: #ffffff;
+  --outline: #fff;
   --font:
-    system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+    system-ui, "Segoe UI", roboto, helvetica, arial, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
   /* Defaults (will be overridden by [data-theme]) */
   --bg-app: var(--bg);
-  --text: #111111;
+  --text: #111;
   --link: #0a66c2;
-  --grid-line: rgba(0, 0, 0, 0.06);
-  --header-bg: rgba(255, 255, 255, 0.7);
-  --button-bg: #000000;
-  --button-text: #ffffff;
-  --button-shadow: #ffffff;
+  --grid-line: rgb(0 0 0 / 6%);
+  --header-bg: rgb(255 255 255 / 70%);
+  --button-bg: #000;
+  --button-text: #fff;
+  --button-shadow: #fff;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
+
   --bg-app: var(--bg);
-  --text: #111111;
+  --text: #111;
   --link: #0a66c2;
   --grid-line: color-mix(in oklab, var(--text) 10%, transparent);
   --header-bg: color-mix(in oklab, var(--bg) 86%, black 0%);
-  --button-bg: #000000;
-  --button-text: #ffffff;
-  --button-shadow: #ffffff;
+  --button-bg: #000;
+  --button-text: #fff;
+  --button-shadow: #fff;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
+
   --bg-app: var(--bg-dark);
-  --text: #eeeeee;
+  --text: #eee;
   --link: #6ab0ff;
   --grid-line: color-mix(in oklab, var(--text) 12%, transparent);
   --header-bg: color-mix(in oklab, var(--bg-dark) 80%, white 0%);
-  --button-bg: #ffffff;
-  --button-text: #000000;
-  --button-shadow: #000000;
+  --button-bg: #fff;
+  --button-text: #000;
+  --button-shadow: #000;
 }
 
 body {
@@ -73,6 +77,7 @@ a {
   color: var(--link);
   text-decoration-color: color-mix(in oklab, var(--link) 50%, transparent);
 }
+
 a:hover {
   text-decoration-color: var(--link);
 }
@@ -98,7 +103,7 @@ a:hover {
 }
 
 .nav .brand a {
-  font-family: "Michroma", sans-serif;
+  font-family: Michroma, sans-serif;
   color: inherit;
   text-decoration: none;
   font-weight: 800;
@@ -118,7 +123,7 @@ a:hover {
   margin: 0 8px 0 0;
 }
 
-@media (min-width: 640px) {
+@media (width >= 640px) {
   .nav .links {
     display: flex;
   }
@@ -127,13 +132,28 @@ a:hover {
 .nav .links a {
   color: inherit;
   text-decoration: none;
-  opacity: 0.9;
-  font-family: "PPEditorialNew", serif;
+  opacity: 0.8;
+  font-family: PPEditorialNew, serif;
   font-weight: 200;
+
   /* Increase clickable size */
   padding: 8px 12px;
   font-size: clamp(1.05rem, 0.5vw + 0.95rem, 1.25rem);
   line-height: 1.2;
+}
+
+.mobile-menu .links a {
+  color: inherit;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: PPEditorialNew, serif;
+  font-weight: 200;
+
+  /* Larger, readable mobile menu link size */
+  font-size: clamp(1.3rem, 3.5vw, 1.375rem);
+  line-height: 1.35;
 }
 
 .nav .links a:hover {
@@ -141,15 +161,30 @@ a:hover {
   text-decoration: underline;
 }
 
-@media (max-width: 639px) {
+@media (width <= 639px) {
   .nav {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
+    /* Increase mobile navbar height */
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  /* Make hamburger and theme toggle buttons larger on mobile */
+  .menu-toggle,
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .menu-toggle svg,
+  .theme-toggle svg {
+    width: 26px;
+    height: 26px;
   }
 }
 
 /* When mobile menu is open, remove the header's bottom border for a seamless surface */
-@media (max-width: 639px) {
+@media (width <= 639px) {
   .no-scroll .site-header {
     border-bottom-color: transparent;
   }
@@ -220,7 +255,7 @@ a:hover {
 }
 
 /* Hide on >=640px since desktop nav is visible there */
-@media (min-width: 640px) {
+@media (width >= 640px) {
   .menu-toggle {
     display: none;
   }
@@ -233,9 +268,11 @@ a:hover {
   left: 0;
   right: 0;
   top: 100%;
+
   /* Match navbar background/blur for seamless look */
   background: var(--header-bg);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(12px); /* Safari support */
   padding: 16px;
   display: grid;
   grid-template-rows: 1fr auto;
@@ -245,13 +282,16 @@ a:hover {
   pointer-events: none;
   transition:
     opacity 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    backdrop-filter 0.3s ease;
 }
 
 .mobile-menu.open {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .mobile-menu .links {
@@ -259,21 +299,6 @@ a:hover {
   gap: 12px;
   list-style: none;
   padding: 0;
-}
-
-.mobile-menu .links a {
-  color: inherit;
-  text-decoration: none;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  font-family: "PPEditorialNew", serif;
-  font-weight: 200;
-}
-
-.mobile-menu .links a:hover {
-  border-color: var(--grid-line);
-  background: color-mix(in oklab, var(--grid-line) 20%, transparent);
 }
 
 .mobile-actions {
@@ -307,16 +332,15 @@ a:hover {
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.16) 0%,
-      rgba(255, 255, 255, 0.08) 30%,
-      rgba(255, 255, 255, 0.04) 100%
-    ), rgba(16, 16, 18, 0.35);
+      rgb(255 255 255 / 16%) 0%,
+      rgb(255 255 255 / 8%) 30%,
+      rgb(255 255 255 / 4%) 100%
+    ), rgb(16 16 18 / 35%);
   backdrop-filter: saturate(1.8) blur(18px);
-  -webkit-backdrop-filter: saturate(1.8) blur(18px);
   box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.35),
-    0 2px 8px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+    0 16px 40px rgb(0 0 0 / 35%),
+    0 2px 8px rgb(0 0 0 / 25%);
+  border: 1px solid rgb(255 255 255 / 18%);
 }
 
 /* Responsive album headers */
@@ -329,7 +353,15 @@ a:hover {
   display: none;
 }
 
-@media (min-width: 640px) {
+/* Boost mobile header font size on small screens */
+@media (width <= 639px) {
+  .mobile-header h1 {
+    /* Override inline sizes for better readability on small screens */
+    font-size: clamp(40px, 10vw, 72px) !important;
+  }
+}
+
+@media (width >= 640px) {
   .mobile-header {
     display: none;
   }
@@ -341,7 +373,7 @@ a:hover {
 }
 
 /* On tall phones, push the mobile header lower for better balance */
-@media (max-width: 640px) and (min-height: 780px) {
+@media (width <= 640px) and (height >= 780px) {
   .mobile-header {
     /* Use small viewport height to account for iOS dynamic bars */
     padding-top: clamp(2rem, 7svh, 6rem);
@@ -349,21 +381,34 @@ a:hover {
 }
 
 /* Mobile layout adjustments */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .grid-dock {
     /* Use small viewport height on iOS to account for dynamic bars */
     top: calc(50svh + 5%);
   }
 }
 
+/* On tall phones (e.g., 390x844), push the grid a bit lower to add breathing room under the header */
+@media (width <= 639px) and (height >= 780px) {
+  .grid-dock {
+    top: calc(50svh + 14%);
+  }
+}
+
+/* On small, shorter phones (e.g., 375x667), also push the grid down slightly */
+@media (width <= 375px) and (height <= 700px) {
+  .grid-dock {
+    top: calc(50svh + 10%);
+  }
+}
+
 /* Prevent squashed look around 430px wide devices (e.g., iPhone Mini/SE) */
-@media (max-width: 430px) {
+@media (width <= 430px) {
   /* Center the 3x3 grid within the floating panel and avoid stretching */
   .grid-dock .grid {
     justify-content: center;
     grid-template-columns: repeat(3, max-content);
-    justify-items: center;
-    align-items: center;
+    place-items: center center;
     gap: 0.625rem; /* 10px */
     padding: 0.875rem; /* 14px */
   }
@@ -375,12 +420,13 @@ a:hover {
     border: none;
     box-shadow: none;
     backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
+
   .grid-dock .grid > div::before,
   .grid-dock .grid > div::after {
     display: none;
   }
+
   .grid-dock .grid > div:hover {
     background: transparent;
     box-shadow: none;
@@ -389,7 +435,7 @@ a:hover {
 }
 
 /* Make the box and icons bigger on tall phones (e.g., 390x844, 393x852) */
-@media (max-width: 430px) and (min-height: 780px) {
+@media (width <= 430px) and (height >= 780px) {
   .grid-dock .grid {
     gap: 1rem; /* 16px */
     padding: 1.25rem; /* 20px */
@@ -401,13 +447,12 @@ a:hover {
 }
 
 /* Ensure icons don't squash on very small screens */
-@media (max-width: 375px) {
+@media (width <= 375px) {
   /* Center the 3x3 grid within the floating panel */
   .grid-dock .grid {
     justify-content: center; /* center the whole grid */
     grid-template-columns: repeat(3, max-content); /* tracks sized to icon width */
-    justify-items: center; /* center items inside each cell */
-    align-items: center;
+    place-items: center center; /* center items inside each cell */
     gap: 0.75rem; /* 12px spacing for breathing room */
     padding: 1rem; /* larger padding to enlarge the box */
   }
@@ -419,7 +464,7 @@ a:hover {
 }
 
 /* Override for tall 375px-wide phones (e.g., 375x812): make box even bigger */
-@media (max-width: 375px) and (min-height: 780px) {
+@media (width <= 375px) and (height >= 780px) {
   .grid-dock .grid {
     gap: 0.875rem; /* 14px */
     padding: 1.25rem; /* 20px */
@@ -436,7 +481,7 @@ a:hover {
     (backdrop-filter: blur(0))
   ) {
   .grid-dock {
-    background: rgba(22, 22, 24, 0.8);
+    background: rgb(22 22 24 / 80%);
   }
 }
 
@@ -463,17 +508,12 @@ a:hover {
   text-align: center;
   touch-action: manipulation;
   user-select: none;
-  -webkit-user-select: none;
   vertical-align: middle;
   white-space: nowrap;
   transition: all 0.15s ease;
 }
 
-.social-link .social-icon {
-  color: var(--button-text) !important;
-  stroke: var(--button-text) !important;
-  fill: none !important;
-}
+/* removed duplicate .social-link .social-icon block (duplicate of line above) */
 
 .social-link:hover {
   text-decoration: none;
@@ -483,7 +523,7 @@ a:hover {
 }
 
 .social-link:active {
-  box-shadow: rgba(0, 0, 0, 0.125) 0 3px 5px inset;
+  box-shadow: rgb(0 0 0 / 12.5%) 0 3px 5px inset;
   outline: 0;
 }
 
@@ -509,7 +549,7 @@ a:hover {
   color: var(--button-text) !important;
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .social-link {
     padding: 12px 50px;
   }

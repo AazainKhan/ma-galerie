@@ -17,6 +17,14 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
  	</main>
 
 	{/* React island dock at the bottom */}
-	<DockApp client:only="react" />
+	<DockApp client:load />
 </BaseLayout>
+
+<style>
+  /* 4K scaling */
+  @media (width >= 1920px) {
+    .desktop-header { min-height: clamp(420px, 70dvh, 640px); }
+    .desktop-header h1 { font-size: clamp(40px, 8vw, 72px) !important; }
+  }
+</style>
 

@@ -5,7 +5,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 <BaseLayout title="About" description="Learn more about Ma Galerie and my photography journey.">
 	<!-- About header for mobile -->
 	<div class="mobile-header">
-		<h1 style="font-size: clamp(32px, 8vw, 62px); opacity: .8; font-family: PPEditorialNew-Ultralight, sans-serif; font-display: swap; text-align: center; padding: 2rem 0; margin-top: 2rem;">About</h1>
+		<h1 style="font-size: clamp(32px, 8vw, 62px); opacity: .8; font-family: PPEditorialNew-Ultralight, sans-serif; font-display: swap; text-align: center; padding: 2rem 0; margin-top: 2rem;">About Ma Galerie</h1>
 	</div>
 
 	<!-- About content for desktop -->
@@ -24,6 +24,49 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 				</p>
 			</div>
 		</div>
+
+		<!-- Ma Vision Section -->
+		<section class="vision-section">
+  <div class="vision-content">
+    <h2 class="vision-title">Ma Vision</h2>
+    <p class="vision-description">
+      My vision is to capture the essence of life, emotion, and beauty in every frame. Through my lens, I strive to tell stories that resonate, inspire, and connect us to the world and each other.
+    </p>
+  </div>
+</section>
+
+		<!-- Ma Gear Section -->
+		<section class="gear-section">
+			<div class="gear-content">
+				<h2 class="gear-title">Ma Gear</h2>
+				<p class="gear-description">
+					Behind every great photograph is the right equipment. Here's a look at the gear that helps bring these images to life.
+				</p>
+				<div class="gear-grid">
+					<!-- Add your gear images here -->
+					<div class="gear-item">
+						<div class="gear-placeholder">
+							<span>Camera Body</span>
+						</div>
+					</div>
+					<div class="gear-item">
+						<div class="gear-placeholder">
+							<span>Lenses</span>
+						</div>
+					</div>
+					<div class="gear-item">
+						<div class="gear-placeholder">
+							<span>Accessories</span>
+						</div>
+					</div>
+					<div class="gear-item">
+						<div class="gear-placeholder">
+							<span>Tripods</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
 	</main>
 </BaseLayout>
 
@@ -42,7 +85,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 
 	.about-title {
 		font-size: clamp(32px, 8vw, 56px);
-		font-family: "PPEditorialNew", serif;
+		font-family: PPEditorialNew, serif;
 		font-weight: 200;
 		opacity: 0.9;
 		margin-bottom: 2rem;
@@ -55,7 +98,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 	}
 
 	.about-text p {
-		font-size: clamp(16px, 2vw, 18px);
+		font-size: clamp(18px, 2vw, 20px);
 		opacity: 0.8;
 		margin-bottom: 1.5rem;
 	}
@@ -64,8 +107,146 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 		margin-bottom: 0;
 	}
 
+	/* Ma Vision Section */
+	.vision-section {
+		width: 100%;
+		max-width: 900px;
+		margin: 3rem auto 0 auto;
+		padding: 0 clamp(16px, 4vw, 32px);
+	}
+
+	.vision-content {
+		text-align: center;
+	}
+
+	.vision-title {
+		font-size: clamp(32px, 8vw, 56px);
+		font-family: PPEditorialNew, serif;
+		font-weight: 200;
+		opacity: 0.9;
+		margin-bottom: 1rem;
+		line-height: 1.2;
+	}
+
+	.vision-description {
+		font-size: clamp(18px, 2vw, 20px);
+		opacity: 0.8;
+		margin-bottom: 2rem;
+		max-width: 600px;
+		margin-left: auto;
+		margin-right: auto;
+		line-height: 1.6;
+	}
+
+	.gear-section {
+		width: 100%;
+		max-width: 1200px;
+		margin-top: 4rem;
+		padding: 0 clamp(16px, 4vw, 32px);
+	}
+
+	.gear-content {
+		text-align: center;
+	}
+
+	.gear-title {
+font-size: clamp(32px, 8vw, 56px);
+		font-family: PPEditorialNew, serif;
+		font-weight: 200;
+		opacity: 0.9;
+		margin-bottom: 1rem;
+		line-height: 1.2;
+	}
+
+	.gear-description {
+		font-size: clamp(18px, 2vw, 20px);
+		opacity: 0.7;
+		margin-bottom: 2.5rem;
+		max-width: 600px;
+		margin-left: auto;
+		margin-right: auto;
+		line-height: 1.6;
+	}
+
+	.gear-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: 1.5rem;
+		margin-top: 2rem;
+	}
+
+	.gear-item {
+		aspect-ratio: 4/3;
+		border-radius: 8px;
+		overflow: hidden;
+		transition: transform 0.3s ease;
+	}
+
+	.gear-item:hover {
+		transform: translateY(-4px);
+	}
+
+	.gear-placeholder {
+		width: 100%;
+		height: 100%;
+		background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 18px;
+		font-weight: 500;
+		color: #666;
+		border: 2px dashed #ccc;
+	}
+
+	.gear-placeholder span {
+		opacity: 0.7;
+	}
+
+	/* Large screens - maintain size */
+ 	@media (width >= 1440px) {
+		.about-container {
+			padding: 5rem 2rem;
+		}
+
+		.about-content {
+			max-width: 800px;
+		}
+
+	/* 4K scaling */
+	@media (width >= 1920px) {
+		.about-container { padding: 6rem 3rem; }
+		.about-content { max-width: 960px; }
+		.about-title { font-size: 64px; }
+		.about-text p { font-size: 22px; }
+		.gear-title { font-size: 64px; }
+		.gear-description { font-size: 22px; max-width: 720px; }
+		.gear-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+	}
+
+		.about-title {
+			font-size: 56px;
+		}
+
+		.about-text p {
+			font-size: 20px;
+		}
+
+		.gear-title {
+ font-size: 56px;
+		}
+
+		.gear-description {
+			font-size: 20px;
+		}
+
+		.gear-section {
+			padding: 0 2rem;
+		}
+	}
+
 	/* Mobile-specific styles */
-	@media (max-width: 639px) {
+	@media (width <= 639px) {
 		.about-container {
 			padding-top: 1rem;
 		}
@@ -77,10 +258,31 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 		.about-text {
 			text-align: center;
 		}
+
+		.about-text p {
+			font-size: 20px; /* Larger text on mobile */
+		}
+
+		.gear-section {
+			margin-top: 3rem;
+		}
+
+		.gear-description {
+			font-size: 20px; /* Larger text on mobile */
+		}
+
+		.gear-grid {
+			grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+			gap: 1rem;
+		}
+
+		.gear-placeholder {
+			font-size: 16px;
+		}
 	}
 
 	/* Hide mobile header on desktop */
-	@media (min-width: 640px) {
+	@media (width >= 640px) {
 		.mobile-header {
 			display: none;
 		}

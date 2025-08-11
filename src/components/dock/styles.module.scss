@@ -139,6 +139,24 @@
     0 0 10px rgba(255, 255, 255, 0.35);
 }
 
+/* 4K scaling */
+@media (width >= 1920px) {
+  .dock {
+    height: 72px;
+    padding: 12px;
+    padding-bottom: 8px;
+    gap: 16px;
+    border-radius: 22px;
+  }
+
+  .dock-card-container { gap: 6px; }
+
+  .dock-dot {
+    width: 8px;
+    height: 8px;
+  }
+}
+
 .divider {
   width: 1px;
   height: 100%;
