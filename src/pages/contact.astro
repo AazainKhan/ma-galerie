@@ -1,0 +1,150 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Contact" description="Get in touch with me on social media.">
+	<!-- Contact header for mobile -->
+	<div class="mobile-header">
+		<h1 style="font-size: clamp(32px, 8vw, 62px); opacity: .8; font-family: PPEditorialNew-Ultralight, sans-serif; font-display: swap; text-align: center; padding: 2rem 0; margin-top: 2rem;">Contact</h1>
+	</div>
+
+	<!-- Contact content for desktop -->
+	<main class="contact-container">
+		<div class="contact-content">
+			<h1 class="contact-title">Get in Touch</h1>
+			<p class="contact-description">
+				Connect with me on social media to see more of my work and stay updated with my latest photography.
+			</p>
+			
+			<div class="social-links">
+				<a href="https://instagram.com/yourusername" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow me on Instagram">
+					<svg class="social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+						<path d="m16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+						<line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+					</svg>
+					<span>Instagram</span>
+				</a>
+				
+				<a href="https://linkedin.com/in/yourprofile" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Connect with me on LinkedIn">
+					<svg class="social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+						<rect width="4" height="12" x="2" y="9"/>
+						<circle cx="4" cy="4" r="2"/>
+					</svg>
+					<span>LinkedIn</span>
+				</a>
+			</div>
+		</div>
+	</main>
+</BaseLayout>
+
+<style>
+	.contact-container {
+		min-height: clamp(360px, 70dvh, 520px);
+		padding: clamp(2rem, 5dvh, 5rem) clamp(16px, 4vw, 32px);
+		display: grid;
+		place-items: center;
+	}
+
+	.contact-content {
+		max-width: 600px;
+		text-align: center;
+	}
+
+	.contact-title {
+		font-size: clamp(32px, 8vw, 56px);
+		font-family: "PPEditorialNew", serif;
+		font-weight: 200;
+		opacity: 0.9;
+		margin-bottom: 1.5rem;
+		line-height: 1.2;
+	}
+
+	.contact-description {
+		font-size: clamp(16px, 2vw, 20px);
+		line-height: 1.6;
+		opacity: 0.8;
+		margin-bottom: 3rem;
+		max-width: 500px;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	.social-links {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		align-items: center;
+	}
+
+	@media (min-width: 640px) {
+		.social-links {
+			flex-direction: row;
+			justify-content: center;
+			gap: 2rem;
+		}
+	}
+
+	.social-link {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 2rem;
+		border: 1px solid var(--grid-line);
+		border-radius: 12px;
+		background: transparent;
+		color: inherit;
+		text-decoration: none;
+		font-family: "PPEditorialNew", serif;
+		font-weight: 200;
+		font-size: 1.1rem;
+		transition: 
+			transform 0.2s ease,
+			border-color 0.2s ease,
+			background-color 0.2s ease,
+			box-shadow 0.2s ease;
+		min-width: 180px;
+		justify-content: center;
+	}
+
+	.social-link:hover {
+		transform: translateY(-2px);
+		border-color: var(--link);
+		background: color-mix(in oklab, var(--grid-line) 10%, transparent);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		text-decoration: none;
+	}
+
+	.social-icon {
+		width: 24px;
+		height: 24px;
+		stroke: currentColor;
+	}
+
+	/* Mobile-specific styles */
+	@media (max-width: 639px) {
+		.contact-container {
+			padding-top: 1rem;
+		}
+		
+		.contact-title {
+			display: none; /* Hide desktop title on mobile since we have mobile header */
+		}
+		
+		.contact-description {
+			margin-bottom: 2rem;
+		}
+		
+		.social-link {
+			min-width: 200px;
+		}
+	}
+
+	/* Hide mobile header on desktop */
+	@media (min-width: 640px) {
+		.mobile-header {
+			display: none;
+		}
+	}
+</style>

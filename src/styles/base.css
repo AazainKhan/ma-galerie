@@ -28,6 +28,9 @@
   --link: #0a66c2;
   --grid-line: rgba(0, 0, 0, 0.06);
   --header-bg: rgba(255, 255, 255, 0.7);
+  --button-bg: #000000;
+  --button-text: #ffffff;
+  --button-shadow: #ffffff;
 }
 
 :root[data-theme="light"] {
@@ -37,6 +40,9 @@
   --link: #0a66c2;
   --grid-line: color-mix(in oklab, var(--text) 10%, transparent);
   --header-bg: color-mix(in oklab, var(--bg) 86%, black 0%);
+  --button-bg: #000000;
+  --button-text: #ffffff;
+  --button-shadow: #ffffff;
 }
 
 :root[data-theme="dark"] {
@@ -46,6 +52,9 @@
   --link: #6ab0ff;
   --grid-line: color-mix(in oklab, var(--text) 12%, transparent);
   --header-bg: color-mix(in oklab, var(--bg-dark) 80%, white 0%);
+  --button-bg: #ffffff;
+  --button-text: #000000;
+  --button-shadow: #000000;
 }
 
 body {
@@ -275,4 +284,233 @@ a:hover {
 /* Prevent body scroll when menu is open */
 .no-scroll body {
   overflow: hidden;
+}
+
+/* Hide scrollbar for mobile dock */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+
+/* 3x3 Grid Dock Styles */
+.grid-dock {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.08) 30%,
+      rgba(255, 255, 255, 0.04) 100%
+    ), rgba(16, 16, 18, 0.35);
+  backdrop-filter: saturate(1.8) blur(18px);
+  -webkit-backdrop-filter: saturate(1.8) blur(18px);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Responsive album headers */
+.mobile-header {
+  display: block;
+  padding: 0 1rem;
+}
+
+.desktop-header {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .mobile-header {
+    display: none;
+  }
+
+  .desktop-header {
+    display: grid;
+    place-items: center;
+  }
+}
+
+/* On tall phones, push the mobile header lower for better balance */
+@media (max-width: 640px) and (min-height: 780px) {
+  .mobile-header {
+    /* Use small viewport height to account for iOS dynamic bars */
+    padding-top: clamp(2rem, 7svh, 6rem);
+  }
+}
+
+/* Mobile layout adjustments */
+@media (max-width: 640px) {
+  .grid-dock {
+    /* Use small viewport height on iOS to account for dynamic bars */
+    top: calc(50svh + 5%);
+  }
+}
+
+/* Prevent squashed look around 430px wide devices (e.g., iPhone Mini/SE) */
+@media (max-width: 430px) {
+  /* Center the 3x3 grid within the floating panel and avoid stretching */
+  .grid-dock .grid {
+    justify-content: center;
+    grid-template-columns: repeat(3, max-content);
+    justify-items: center;
+    align-items: center;
+    gap: 0.625rem; /* 10px */
+    padding: 0.875rem; /* 14px */
+  }
+
+  /* Keep icons compact so the container has breathing room */
+  .grid-dock .grid > div {
+    width: 3rem; /* 48px */
+    background: transparent; /* remove gray background behind icon */
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .grid-dock .grid > div::before,
+  .grid-dock .grid > div::after {
+    display: none;
+  }
+  .grid-dock .grid > div:hover {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+}
+
+/* Make the box and icons bigger on tall phones (e.g., 390x844, 393x852) */
+@media (max-width: 430px) and (min-height: 780px) {
+  .grid-dock .grid {
+    gap: 1rem; /* 16px */
+    padding: 1.25rem; /* 20px */
+  }
+
+  .grid-dock .grid > div {
+    width: 5rem; /* 80px */
+  }
+}
+
+/* Ensure icons don't squash on very small screens */
+@media (max-width: 375px) {
+  /* Center the 3x3 grid within the floating panel */
+  .grid-dock .grid {
+    justify-content: center; /* center the whole grid */
+    grid-template-columns: repeat(3, max-content); /* tracks sized to icon width */
+    justify-items: center; /* center items inside each cell */
+    align-items: center;
+    gap: 0.75rem; /* 12px spacing for breathing room */
+    padding: 1rem; /* larger padding to enlarge the box */
+  }
+
+  /* Slightly smaller icons so spacing remains even */
+  .grid-dock .grid > div {
+    width: 4rem; /* 64px; make boxes and icons bigger on very small screens */
+  }
+}
+
+/* Override for tall 375px-wide phones (e.g., 375x812): make box even bigger */
+@media (max-width: 375px) and (min-height: 780px) {
+  .grid-dock .grid {
+    gap: 0.875rem; /* 14px */
+    padding: 1.25rem; /* 20px */
+  }
+
+  .grid-dock .grid > div {
+    width: 4.5rem; /* 72px */
+  }
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not (
+    (-webkit-backdrop-filter: blur(0)) or
+    (backdrop-filter: blur(0))
+  ) {
+  .grid-dock {
+    background: rgba(22, 22, 24, 0.8);
+  }
+}
+
+/* Button-50 Style for Social Links */
+.social-link {
+  position: relative;
+  background-color: var(--button-bg) !important;
+  background-image: none;
+  border-radius: 4px !important;
+  border: 1px solid var(--button-bg) !important;
+  box-shadow:
+    var(--button-shadow) 4px 4px 0 0,
+    var(--button-bg) 4px 4px 0 1px;
+  box-sizing: border-box;
+  color: var(--button-text) !important;
+  cursor: pointer;
+  display: flex;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  overflow: visible;
+  padding: 12px 40px;
+  text-align: center;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  vertical-align: middle;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.social-link .social-icon {
+  color: var(--button-text) !important;
+  stroke: var(--button-text) !important;
+  fill: none !important;
+}
+
+.social-link:hover {
+  text-decoration: none;
+  background-color: var(--button-bg) !important;
+  border: 1px solid var(--button-bg) !important;
+  color: var(--button-text) !important;
+}
+
+.social-link:active {
+  box-shadow: rgba(0, 0, 0, 0.125) 0 3px 5px inset;
+  outline: 0;
+}
+
+.social-link:not([disabled]):active {
+  box-shadow:
+    var(--button-shadow) 2px 2px 0 0,
+    var(--button-bg) 2px 2px 0 1px;
+  transform: translate(2px, 2px);
+}
+
+.social-link .social-icon {
+  color: var(--button-text) !important;
+  stroke: var(--button-text) !important;
+  fill: none !important;
+  z-index: 2;
+  position: relative;
+  margin-right: 0; /* Override any existing margin to prevent issues */
+}
+
+.social-link span {
+  z-index: 2;
+  position: relative;
+  color: var(--button-text) !important;
+}
+
+@media (min-width: 768px) {
+  .social-link {
+    padding: 12px 50px;
+  }
 }
