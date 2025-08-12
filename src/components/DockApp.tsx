@@ -6,14 +6,13 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import type { MotionValue } from "framer-motion";
 import {
   animate,
-  AnimatePresence,
   motion,
   useMotionValue,
   useSpring,
   useTransform,
 } from "framer-motion";
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 
 const SCALE = 2.25; // max scale factor of an icon
 const DISTANCE = 110; // pixels before mouse affects an icon
@@ -35,8 +34,6 @@ const APPS = [
 ];
 
 export default function DockApp() {
-  const [overlayOpen, setOverlayOpen] = useState(false);
-  const [activeApp, setActiveApp] = useState<string | null>(null);
   const mouseLeft = useMotionValue(-Infinity);
   const mouseRight = useMotionValue(-Infinity);
   const left = useTransform(mouseLeft, [0, 40], [0, -40]);
@@ -51,71 +48,20 @@ export default function DockApp() {
     mouseRight.get() === -Infinity ? 0 : rightSpring.get(),
   );
 
-  // Close on Escape
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOverlayOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  const slugify = (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
 
-  const openOverlay = (appName: string) => {
-    setActiveApp(appName);
-    setOverlayOpen(true);
+  const navigateToApp = (appName: string) => {
+    const slug = slugify(appName);
+    const url = `/albums/${slug}`;
+    window.location.assign(url);
   };
 
   return (
     <>
-      {/* Overlay */}
-      <AnimatePresence>
-        {overlayOpen && (
-          <motion.div
-            key="overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed inset-0 z-[60]"
-            aria-modal="true"
-            role="dialog"
-          >
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black"
-              onClick={() => setOverlayOpen(false)}
-            />
-            {/* Content panel */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 20, opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="relative mx-auto mt-10 w-[min(960px,92vw)] rounded-2xl border border-gray-600 bg-gray-800/95 text-white shadow-2xl backdrop-blur p-5 sm:p-7"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg sm:text-xl font-semibold tracking-wide">
-                  {activeApp ?? "App"}
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setOverlayOpen(false)}
-                  className="rounded-md border border-gray-500/70 bg-gray-700/60 px-3 py-1.5 text-sm hover:bg-gray-700 focus:outline-none"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="mt-4 text-sm/6 text-gray-200">
-                This is a lightweight overlay "page" rendered above the Albums page. You can replace this content with your desired page/component.
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Fixed, centered dock for desktop (scale up on ≥1920px) */}
       <div className="hidden sm:block fixed bottom-3 left-1/2 -translate-x-1/2 z-50 min-[1920px]:bottom-5">
         <motion.div
@@ -138,7 +84,7 @@ export default function DockApp() {
           />
 
           {Array.from(Array(APPS.length).keys()).map((i) => (
-            <AppIcon key={i} mouseLeft={mouseLeft} onOpen={openOverlay}>
+            <AppIcon key={i} mouseLeft={mouseLeft} onOpen={navigateToApp}>
               {APPS[i]}
             </AppIcon>
           ))}
@@ -168,7 +114,7 @@ export default function DockApp() {
             />
             <div className="flex items-end gap-0.5 min-[430px]:gap-1 min-[460px]:gap-1.5 min-[500px]:gap-2 min-[550px]:gap-2.5 min-[600px]:gap-3 overflow-hidden">
               {Array.from(Array(8).keys()).map((i) => (
-                <MobileAppIcon key={i} mouseLeft={mouseLeft} onOpen={openOverlay}>
+                <MobileAppIcon key={i} mouseLeft={mouseLeft} onOpen={navigateToApp}>
                   {APPS[i] || `App ${i + 1}`}
                 </MobileAppIcon>
               ))}

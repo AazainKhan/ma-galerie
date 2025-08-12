@@ -1,0 +1,21 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+
+const { album } = Astro.params;
+const title = (album ?? "album").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+---
+
+<BaseLayout title={title} description={`Viewing album: ${title}`}>
+  <main class="container mx-auto px-4 py-10 min-h-[60dvh]">
+    <h1 class="text-4xl font-light tracking-wide text-center opacity-80">{title}</h1>
+
+    <p class="mt-6 text-center text-gray-300">
+      This is the dedicated page for <strong class="font-semibold">{title}</strong>.
+      Replace this placeholder with your album content or a React/Astro component.
+    </p>
+
+    <div class="mt-10 flex justify-center gap-3">
+      <a href="/albums" class="rounded-md border border-gray-600 bg-gray-800/70 px-4 py-2 text-sm text-white hover:bg-gray-800 focus:outline-none">← Back to Albums</a>
+    </div>
+  </main>
+</BaseLayout>
