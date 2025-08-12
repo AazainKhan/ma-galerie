@@ -26,3 +26,6 @@ pnpm-debug.log*
 # playright
 .playwright-mcp/
 .github/chatmodes/dev-pro.chatmode.md
+.github/instructions/DONT ASK DO IT.instructions.md
+.clinerules/copilot rules.md
+.gitignore
