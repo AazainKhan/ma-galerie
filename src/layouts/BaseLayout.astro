@@ -27,7 +27,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`;
 ---
 
-<html lang="en" data-theme={initialTheme} style={initialTheme ? `color-scheme: ${initialTheme}` : undefined}>
+<html lang="en" data-theme={initialTheme} class={initialTheme === "dark" ? "dark" : undefined} style={initialTheme ? `color-scheme: ${initialTheme}` : undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -50,9 +50,9 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
         </>
       )
     }
-    {/* Set initial theme before paint to avoid flash (no-op if SSR already set) */}
+    {/* Set initial theme before paint to avoid flash (no-op if SSR already set). Also ensure Tailwind dark: works by toggling .dark class */}
     <script is:inline>
-      {`(function(){try{var root=document.documentElement;if(root.dataset&&root.dataset.theme){return;}var k='theme';var s=localStorage.getItem(k);var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var t=(s==='dark'||s==='light')?s:m;root.dataset.theme=t;root.style.colorScheme=t;}catch(e){}})();`}
+      {`(function(){try{var root=document.documentElement;if(root.dataset&&root.dataset.theme){root.classList.toggle('dark', root.dataset.theme==='dark');return;}var k='theme';var s=localStorage.getItem(k);var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var t=(s==='dark'||s==='light')?s:m;root.dataset.theme=t;root.style.colorScheme=t;root.classList.toggle('dark', t==='dark');}catch(e){}})();`}
     </script>
   </head>
   <body>
@@ -139,6 +139,7 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
       function setTheme(theme: "light" | "dark") {
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
+        document.documentElement.classList.toggle("dark", theme === "dark");
         try {
           localStorage.setItem(STORAGE_KEY, theme);
         } catch (_) {}

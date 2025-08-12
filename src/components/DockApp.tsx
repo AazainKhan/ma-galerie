@@ -56,44 +56,12 @@ export default function DockApp() {
 
   const navigateToApp = (appName: string) => {
     const slug = slugify(appName);
-    const url = `/albums/${slug}`;
-    // Prefer native View Transitions API when available (Chromium-based)
-    type DocWithVT = Document & {
-      startViewTransition?: (callback: () => void) => void;
-    };
-    const doc = document as DocWithVT;
-    if (typeof doc.startViewTransition === "function") {
-      doc.startViewTransition(() => {
-        window.location.assign(url);
-      });
-      return;
-    }
-
-    // Fallback: inject a lightweight fade overlay, then navigate
-    const overlay = document.createElement("div");
-    overlay.setAttribute(
-      "style",
-      [
-        "position:fixed",
-        "inset:0",
-        "z-index:9999",
-        "background:rgba(0,0,0,0)",
-        "transition:background 180ms ease",
-        "pointer-events:none",
-      ].join(";"),
-    );
-    document.body.appendChild(overlay);
-    // trigger transition
-    requestAnimationFrame(() => {
-      overlay.style.background = "rgba(0,0,0,0.22)";
-      window.setTimeout(() => {
-        window.location.assign(url);
-      }, 160);
-    });
+    window.location.assign(`/albums/${slug}`);
   };
 
   return (
     <>
+      {/* No overlay; clicking icons navigates to a dedicated page */}
       {/* Fixed, centered dock for desktop (scale up on ≥1920px) */}
       <div className="hidden sm:block fixed bottom-3 left-1/2 -translate-x-1/2 z-50 min-[1920px]:bottom-5">
         <motion.div
@@ -222,8 +190,8 @@ function AppIcon({
             ref={ref}
             type="button"
             style={{ x: xSpring, scale: scaleSpring, y }}
-            onClick={() => {
-              animate(y, [0, -40, 0], {
+            onClick={async () => {
+              const controls = animate(y, [0, -40, 0], {
                 repeat: 2,
                 ease: [
                   [0, 0, 0.2, 1],
@@ -231,6 +199,11 @@ function AppIcon({
                 ],
                 duration: 0.7,
               });
+              try {
+                await controls.finished;
+              } catch (_) {
+                // ignore cancellation, still proceed
+              }
               const name = typeof children === "string" ? children : "App";
               onOpen(name);
             }}
@@ -301,8 +274,8 @@ function MobileAppIcon({
             ref={ref}
             type="button"
             style={{ x: xSpring, scale: scaleSpring, y }}
-            onClick={() => {
-              animate(y, [0, -30, 0], {
+            onClick={async () => {
+              const controls = animate(y, [0, -30, 0], {
                 repeat: 2,
                 ease: [
                   [0, 0, 0.2, 1],
@@ -310,6 +283,11 @@ function MobileAppIcon({
                 ],
                 duration: 0.7,
               });
+              try {
+                await controls.finished;
+              } catch (_) {
+                // ignore cancellation, still proceed
+              }
               const name = typeof children === "string" ? children : "App";
               onOpen(name);
             }}

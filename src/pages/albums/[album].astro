@@ -6,16 +6,50 @@ const title = (album ?? "album").replace(/-/g, " ").replace(/\b\w/g, (c) => c.to
 ---
 
 <BaseLayout title={title} description={`Viewing album: ${title}`}>
-  <main class="container mx-auto px-4 py-10 min-h-[60dvh]">
-    <h1 class="text-4xl font-light tracking-wide text-center opacity-80">{title}</h1>
+  <style>
+    @keyframes page-fade-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .page-fade-in { animation: page-fade-in 200ms ease-out; }
 
-    <p class="mt-6 text-center text-gray-300">
-      This is the dedicated page for <strong class="font-semibold">{title}</strong>.
-      Replace this placeholder with your album content or a React/Astro component.
-    </p>
+    /* Light defaults (scoped) */
+    .album-breadcrumb { color: #4b5563 !important; } /* gray-600 */
+    .album-breadcrumb a { color: #374151 !important; } /* gray-700 */
+    .album-breadcrumb .sep { color: #6b7280 !important; } /* gray-500 */
+    .album-breadcrumb .current { color: #111827 !important; } /* gray-900 */
+    .album-title {
+      color: #111827 !important; /* gray-900 */
+      font-family: PPEditorialNew, serif !important; /* match nav links */
+      font-weight: 200 !important; /* Ultralight like nav links */
+    }
 
-    <div class="mt-10 flex justify-center gap-3">
-      <a href="/albums" class="rounded-md border border-gray-600 bg-gray-800/70 px-4 py-2 text-sm text-white hover:bg-gray-800 focus:outline-none">← Back to Albums</a>
+    /* Dark overrides must be global to escape Astro's style scoping */
+    :global(.dark) .album-breadcrumb { color: #d1d5db !important; } /* gray-300 */
+    :global(.dark) .album-breadcrumb a { color: #e5e7eb !important; } /* gray-200 */
+    :global(.dark) .album-breadcrumb .sep { color: #9ca3af !important; } /* gray-400 */
+    :global(.dark) .album-breadcrumb .current { color: #f3f4f6 !important; } /* gray-100 */
+    :global(.dark) .album-title {
+      color: rgba(255,255,255,.9) !important;
+      font-family: PPEditorialNew, serif !important;
+      font-weight: 200 !important;
+    }
+  </style>
+  <main class="flex min-h-[60dvh] flex-col px-4 py-10" style="display:flex;min-height:60dvh;flex-direction:column;padding:2.5rem 1rem;">
+    <!-- Breadcrumb at top-left, under nav -->
+    <div class="mx-auto w-full max-w-[1200px]" style="padding-left: clamp(16px, 4vw, 32px); padding-right: clamp(16px, 4vw, 32px);">
+      <nav aria-label="Breadcrumb" class="album-breadcrumb text-sm flex items-center gap-2">
+        <a href="/albums" class="hover:underline">← Albums</a>
+        <span class="sep">/</span>
+        <span class="current">{title}</span>
+      </nav>
+    </div>
+
+    <!-- Centered content block -->
+    <div class="flex-1 flex items-center justify-center" style="display:flex;align-items:center;justify-content:center;">
+      <div class="page-fade-in w-full max-w-4xl text-center" style="text-align:center;width:100%;max-width:64rem;margin:0 auto;">
+        <h1 class="album-title mt-4 text-4xl font-light tracking-wide">{title}</h1>
+      </div>
     </div>
   </main>
 </BaseLayout>

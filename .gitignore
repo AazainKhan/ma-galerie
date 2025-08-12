@@ -29,3 +29,4 @@ pnpm-debug.log*
 .github/instructions/DONT ASK DO IT.instructions.md
 .clinerules/copilot rules.md
 .gitignore
+.github/copilot-instructions.md
