@@ -57,7 +57,39 @@ export default function DockApp() {
   const navigateToApp = (appName: string) => {
     const slug = slugify(appName);
     const url = `/albums/${slug}`;
-    window.location.assign(url);
+    // Prefer native View Transitions API when available (Chromium-based)
+    type DocWithVT = Document & {
+      startViewTransition?: (callback: () => void) => void;
+    };
+    const doc = document as DocWithVT;
+    if (typeof doc.startViewTransition === "function") {
+      doc.startViewTransition(() => {
+        window.location.assign(url);
+      });
+      return;
+    }
+
+    // Fallback: inject a lightweight fade overlay, then navigate
+    const overlay = document.createElement("div");
+    overlay.setAttribute(
+      "style",
+      [
+        "position:fixed",
+        "inset:0",
+        "z-index:9999",
+        "background:rgba(0,0,0,0)",
+        "transition:background 180ms ease",
+        "pointer-events:none",
+      ].join(";"),
+    );
+    document.body.appendChild(overlay);
+    // trigger transition
+    requestAnimationFrame(() => {
+      overlay.style.background = "rgba(0,0,0,0.22)";
+      window.setTimeout(() => {
+        window.location.assign(url);
+      }, 160);
+    });
   };
 
   return (
