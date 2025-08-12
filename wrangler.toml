@@ -5,8 +5,6 @@ compatibility_flags = ["nodejs_compat"]
 
 # Serve Astro's built static assets alongside the Worker
 
-# Keep assets pointed at the full build directory. We'll exclude `_worker.js`
-# from asset upload using a `.assetsignore` file generated at build time.
 assets = { directory = "dist" }
 
 [[r2_buckets]]

@@ -21,14 +21,14 @@ export default defineConfig({
       rollupOptions: {
         output: {
           manualChunks: {
-            "fancybox-vendor": ["@fancyapps/ui"],
-            "motion-vendor": ["framer-motion", "@react-spring/web"],
+            'fancybox-vendor': ['@fancyapps/ui'],
+            'motion-vendor': ['framer-motion', '@react-spring/web'],
           },
         },
       },
     },
     optimizeDeps: {
-      include: ["@fancyapps/ui", "framer-motion"],
+      include: ['@fancyapps/ui', 'framer-motion'],
     },
   },
   output: "server",
