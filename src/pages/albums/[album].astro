@@ -2,7 +2,9 @@
 import BaseLayout from "~/layouts/BaseLayout.astro";
 
 const { album } = Astro.params;
-const title = (album ?? "album").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const title = (album ?? "album")
+  .replace(/-/g, " ")
+  .replace(/\b\w/g, (c) => c.toUpperCase());
 ---
 
 <BaseLayout title={title} description={`Viewing album: ${title}`}>

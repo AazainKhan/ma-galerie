@@ -114,7 +114,11 @@ export default function DockApp() {
             />
             <div className="flex items-end gap-0.5 min-[430px]:gap-1 min-[460px]:gap-1.5 min-[500px]:gap-2 min-[550px]:gap-2.5 min-[600px]:gap-3 overflow-hidden">
               {Array.from(Array(8).keys()).map((i) => (
-                <MobileAppIcon key={i} mouseLeft={mouseLeft} onOpen={navigateToApp}>
+                <MobileAppIcon
+                  key={i}
+                  mouseLeft={mouseLeft}
+                  onOpen={navigateToApp}
+                >
                   {APPS[i] || `App ${i + 1}`}
                 </MobileAppIcon>
               ))}
