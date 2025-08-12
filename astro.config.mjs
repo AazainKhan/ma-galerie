@@ -9,10 +9,26 @@ export default defineConfig({
     enabled: false,
   },
   integrations: [react(), sitemap()],
-  prefetch: true,
+  prefetch: {
+    prefetchAll: false, // Only prefetch visible links
+    defaultStrategy: "hover",
+  },
   vite: {
     ssr: {
       noExternal: ["smartypants"],
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'fancybox-vendor': ['@fancyapps/ui'],
+            'motion-vendor': ['framer-motion', '@react-spring/web'],
+          },
+        },
+      },
+    },
+    optimizeDeps: {
+      include: ['@fancyapps/ui', 'framer-motion'],
     },
   },
   output: "server",
@@ -21,5 +37,16 @@ export default defineConfig({
     platformProxy: {
       enabled: true,
     },
+    runtime: {
+      mode: "remote",
+      type: "pages",
+    },
+    routes: {
+      strategy: "include",
+      patterns: ["/*"],
+    },
   }),
+  build: {
+    inlineStylesheets: "auto",
+  },
 });

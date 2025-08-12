@@ -8,6 +8,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro check && astro build",
+    "build:cloudflare": "NODE_ENV=production astro build",
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check && biome check",
@@ -15,22 +16,27 @@
     "stylelint": "stylelint '**/*.{astro,css}'",
     "stylelint:fix": "stylelint '**/*.{astro,css}' --fix",
     "deploy": "wrangler deploy",
-    "deploy:version": "wrangler versions upload"
+    "deploy:staging": "NODE_ENV=staging wrangler deploy --env staging",
+    "deploy:production": "NODE_ENV=production wrangler deploy",
+    "deploy:version": "wrangler versions upload",
+    "deploy:cloudflare": "node scripts/deploy-cloudflare.js",
+    "monitor": "wrangler tail --format pretty",
+    "analyze": "wrangler deploy --dry-run"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/react": "^4.3.0",
-    "@astrojs/sitemap": "^3.4.1",
+    "@astrojs/sitemap": "^3.4.2",
     "@fancyapps/ui": "^6.0.17",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-spring/shared": "^10.0.1",
     "@react-spring/web": "^10.0.1",
-    "@types/react": "^19.1.9",
+    "@types/react": "^18.2.0",
     "@use-gesture/react": "^10.3.1",
-    "astro": "^5.12.3",
+    "astro": "^5.12.9",
     "framer-motion": "^12.23.12",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "smartypants": "^0.2.2",
     "typescript": "^5.8.3"
   },
@@ -47,6 +53,7 @@
     "stylelint-config-astro": "^1.0.4",
     "stylelint-config-standard": "^38.0.0",
     "tailwindcss": "^4.1.11",
-    "wrangler": "^3.114.13"
+    "wrangler": "^4.28.1",
+    "@types/react-dom": "^18.0.11"
   }
 }

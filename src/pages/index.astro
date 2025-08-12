@@ -6,6 +6,10 @@ import "@fancyapps/ui/dist/fancybox/fancybox.css";
 const images = import.meta.glob<{ default: ImageMetadata }>(
   "../../public/images/*.{jpg,jpeg,png,webp}",
 );
+
+// Pre-load critical images
+const criticalImages = Object.entries(images).slice(0, 8);
+const lazyImages = Object.entries(images).slice(8);
 ---
 
 <BaseLayout
@@ -13,8 +17,9 @@ const images = import.meta.glob<{ default: ImageMetadata }>(
   description="A collection of my favorite photos."
 >
   <section class="justified-gallery" id="photoswipe">
+    <!-- Critical images loaded eagerly -->
     {
-      Object.entries(images).map(async ([_path, image], index) => {
+      criticalImages.map(async ([_path, image], index) => {
         const { default: imageData } = await image();
         return (
           <a
@@ -22,13 +27,42 @@ const images = import.meta.glob<{ default: ImageMetadata }>(
             href={imageData.src}
             target="_blank"
             data-fancybox="gallery"
+            data-index={index}
           >
             <Image
               format="webp"
               src={imageData}
-              alt=""
+              alt="Gallery image"
               height={400}
-              loading={index < 20 ? "eager" : "lazy"}
+              loading="eager"
+              decoding="sync"
+              fetchpriority="high"
+            />
+          </a>
+        );
+      })
+    }
+    
+    <!-- Lazy loaded images -->
+    {
+      lazyImages.map(async ([_path, image], index) => {
+        const { default: imageData } = await image();
+        return (
+          <a
+            style={`--width: ${imageData.width}; --height: ${imageData.height};`}
+            href={imageData.src}
+            target="_blank"
+            data-fancybox="gallery"
+            data-index={index + 8}
+          >
+            <Image
+              format="webp"
+              src={imageData}
+              alt="Gallery image"
+              height={400}
+              loading="lazy"
+              decoding="async"
+              fetchpriority="low"
             />
           </a>
         );
@@ -40,26 +74,34 @@ const images = import.meta.glob<{ default: ImageMetadata }>(
 <script>
   import { Fancybox } from "@fancyapps/ui/dist/fancybox/";
 
-  Fancybox.bind("[data-fancybox]", {
-    theme: "auto",
-    mainStyle: {
-      "--f-button-width": "44px",
-      "--f-button-height": "44px",
-      "--f-button-border-radius": "50%",
-      "--f-toolbar-padding": "16px",
-    },
-    Carousel: {
-      Arrows: false,
-      Toolbar: {
-        display: {
-          left: ["fullscreen"],
-          middle: [],
-          right: ["close"],
-        },
-      },
-      transition: "slide",
-    },
-  });
+  // Initialize Fancybox with performance optimizations
+  Fancybox.bind("[data-fancybox]");
+
+  // Intersection Observer for better lazy loading
+  if ('IntersectionObserver' in window) {
+    const imageObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const img = entry.target.querySelector('img');
+          if (img && img.dataset.src) {
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+            imageObserver.unobserve(entry.target);
+          }
+        }
+      });
+    }, {
+      rootMargin: '50px 0px',
+      threshold: 0.1
+    });
+
+    // Observe lazy images
+    document.querySelectorAll('[data-fancybox]').forEach((link, index) => {
+      if (index >= 8) {
+        imageObserver.observe(link);
+      }
+    });
+  }
 </script>
 
 <style>
