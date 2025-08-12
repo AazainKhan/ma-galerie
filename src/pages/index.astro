@@ -4,7 +4,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 import "@fancyapps/ui/dist/fancybox/fancybox.css";
 
 const images = import.meta.glob<{ default: ImageMetadata }>(
-  "../images/*.{jpg,jpeg,png,webp}",
+  "../../public/images/*.{jpg,jpeg,png,webp}",
 );
 ---
 

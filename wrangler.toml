@@ -1,9 +1,16 @@
 name = "ma-galerie"
 main = "dist/_worker.js"
 compatibility_date = "2025-08-09"
+compatibility_flags = ["nodejs_compat"]
 
-# Serve Astro’s built static assets alongside the Worker
-assets = { directory = "dist/client" }
+# Serve Astro's built static assets alongside the Worker
+assets = { directory = "dist" }
+
+# Add SESSION KV binding to fix the warning
+[[kv_namespaces]]
+binding = "SESSION"
+id = "your-session-kv-id"
+preview_id = "your-preview-session-kv-id"
 
 # Optional: set bindings/env as needed
 #[vars]
