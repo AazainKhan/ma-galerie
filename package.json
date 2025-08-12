@@ -8,6 +8,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro check && astro build",
+    "postbuild": "printf '_worker.js\n' > dist/.assetsignore",
     "build:cloudflare": "NODE_ENV=production astro build",
     "preview": "astro preview",
     "astro": "astro",
