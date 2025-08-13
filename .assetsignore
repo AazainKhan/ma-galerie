@@ -1,11 +1,1 @@
-# Exclude server-side files from being served as static assets
 _worker.js
-_worker.js.map
-
-# Exclude any server-only directories
-server/
-functions/
-
-# Exclude any other server-side files
-*.server.js
-*.server.ts
