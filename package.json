@@ -52,7 +52,7 @@
     "sharp": "^0.34.3",
     "stylelint": "^16.23.1",
     "stylelint-config-astro": "^1.0.4",
-    "stylelint-config-standard": "^38.0.0",
+    "stylelint-config-standard": "^39.0.1",
     "tailwindcss": "^4.1.11",
     "wrangler": "^4.28.1",
     "@types/react-dom": "^18.0.11"
