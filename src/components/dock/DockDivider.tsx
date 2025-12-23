@@ -39,7 +39,7 @@ export const DockDivider: React.FC = () => {
   if (!zoomLevel) return null;
 
   return (
-    <div className={styles["divider__container"]} {...bind()}>
+    <div className={styles.divider__container} {...bind()}>
       <span className={styles.divider}></span>
     </div>
   );

@@ -1,7 +1,5 @@
 ---
-import "~/styles/reset.css";
-import "~/styles/base.css";
-import "~/styles/tailwind.css";
+import "~/styles/global.css";
 
 import smartypants from "smartypants";
 
@@ -34,6 +32,11 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalURL} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <!-- Preload critical fonts to prevent FOUT -->
+    <link rel="preload" href="/fonts/PPEditorialNew-Ultralight.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Michroma-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    
     <title set:html={smartypants(pageTitle, 1)} />
     <meta name="description" content={smartypants(description, 1)} />
     <meta property="og:title" content={smartypants(title, 1)} />
@@ -50,9 +53,40 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
         </>
       )
     }
-    {/* Set initial theme before paint to avoid flash (no-op if SSR already set). Also ensure Tailwind dark: works by toggling .dark class */}
+    {/* Set initial theme before paint to avoid flash */}
     <script is:inline>
-      {`(function(){try{var root=document.documentElement;if(root.dataset&&root.dataset.theme){root.classList.toggle('dark', root.dataset.theme==='dark');return;}var k='theme';var s=localStorage.getItem(k);var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var t=(s==='dark'||s==='light')?s:m;root.dataset.theme=t;root.style.colorScheme=t;root.classList.toggle('dark', t==='dark');}catch(e){}})();`}
+      (function() {
+        try {
+          var root = document.documentElement;
+          var theme = localStorage.getItem('theme');
+          var cookieTheme = document.cookie.match(/theme=([^;]+)/)?.[1];
+          
+          // Priority: LocalStorage > Cookie > System
+          // But if Cookie exists and differs from LocalStorage, we should probably trust LocalStorage (user action) 
+          // and update Cookie, OR trust Cookie (server state).
+          // Let's trust LocalStorage as the source of truth for the client.
+          
+          if (!theme && cookieTheme) {
+            theme = cookieTheme;
+          }
+          
+          if (!theme) {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          
+          // Apply theme
+          root.dataset.theme = theme;
+          root.style.colorScheme = theme;
+          root.classList.toggle('dark', theme === 'dark');
+          
+          // Sync cookie if needed
+          if (cookieTheme !== theme) {
+            document.cookie = "theme=" + theme + "; path=/; max-age=31536000; samesite=lax";
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      })();
     </script>
   </head>
   <body>

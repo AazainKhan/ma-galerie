@@ -22,18 +22,18 @@ const SPRING = {
   stiffness: 170,
   damping: 12,
 };
-const APPS = [
-  "Safari",
-  "Mail",
-  "Messages",
-  "Photos",
-  "Notes",
-  "Calendar",
-  "Reminders",
-  "Music",
-];
 
-export default function DockApp() {
+type Album = {
+  title: string;
+  slug: string;
+  cover_image_src?: string | null;
+};
+
+type DockAppProps = {
+  albums: Album[];
+};
+
+export default function DockApp({ albums }: DockAppProps) {
   const mouseLeft = useMotionValue(-Infinity);
   const mouseRight = useMotionValue(-Infinity);
   const left = useTransform(mouseLeft, [0, 40], [0, -40]);
@@ -48,14 +48,7 @@ export default function DockApp() {
     mouseRight.get() === -Infinity ? 0 : rightSpring.get(),
   );
 
-  const slugify = (name: string) =>
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-
-  const navigateToApp = (appName: string) => {
-    const slug = slugify(appName);
+  const navigateToApp = (slug: string) => {
     window.location.assign(`/albums/${slug}`);
   };
 
@@ -79,13 +72,27 @@ export default function DockApp() {
           className="relative mx-auto flex h-20 w-fit items-end gap-3 px-3 pb-3 min-[1920px]:h-24 min-[1920px]:gap-4 min-[1920px]:px-4 min-[1920px]:pb-4"
         >
           <motion.div
-            className="absolute inset-y-0 -z-10 rounded-2xl bg-gray-700/90 border border-gray-600 min-[1920px]:rounded-3xl"
-            style={{ left: safeLeft, right: safeRight }}
+            className="absolute inset-y-0 -z-10 rounded-2xl min-[1920px]:rounded-3xl"
+            style={{
+              left: safeLeft,
+              right: safeRight,
+              backgroundColor: "var(--dock-bg)",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: "var(--dock-border)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+            }}
           />
 
-          {Array.from(Array(APPS.length).keys()).map((i) => (
-            <AppIcon key={i} mouseLeft={mouseLeft} onOpen={navigateToApp}>
-              {APPS[i]}
+          {albums.map((album) => (
+            <AppIcon
+              key={album.slug}
+              mouseLeft={mouseLeft}
+              onOpen={() => navigateToApp(album.slug)}
+              coverImage={album.cover_image_src}
+            >
+              {album.title}
             </AppIcon>
           ))}
         </motion.div>
@@ -109,17 +116,27 @@ export default function DockApp() {
             className="relative mx-auto flex h-16 min-[500px]:h-18 min-[600px]:h-20 w-fit max-w-full items-end gap-0.5 min-[430px]:gap-1 min-[460px]:gap-1.5 min-[500px]:gap-2 min-[550px]:gap-2.5 min-[600px]:gap-3 px-1 min-[430px]:px-1.5 min-[460px]:px-2 min-[500px]:px-2.5 min-[600px]:px-3 pb-1 min-[430px]:pb-1.5 min-[460px]:pb-2 min-[500px]:pb-2.5 min-[600px]:pb-3"
           >
             <motion.div
-              className="absolute inset-y-0 -z-10 rounded-xl min-[600px]:rounded-2xl bg-gray-700/90 border border-gray-600"
-              style={{ left: safeLeft, right: safeRight }}
+              className="absolute inset-y-0 -z-10 rounded-xl min-[600px]:rounded-2xl"
+              style={{
+                left: safeLeft,
+                right: safeRight,
+                backgroundColor: "var(--dock-bg)",
+                borderWidth: "1px",
+                borderStyle: "solid",
+                borderColor: "var(--dock-border)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+              }}
             />
             <div className="flex items-end gap-0.5 min-[430px]:gap-1 min-[460px]:gap-1.5 min-[500px]:gap-2 min-[550px]:gap-2.5 min-[600px]:gap-3 overflow-hidden">
-              {Array.from(Array(8).keys()).map((i) => (
+              {albums.slice(0, 8).map((album) => (
                 <MobileAppIcon
-                  key={i}
+                  key={album.slug}
                   mouseLeft={mouseLeft}
-                  onOpen={navigateToApp}
+                  onOpen={() => navigateToApp(album.slug)}
+                  coverImage={album.cover_image_src}
                 >
-                  {APPS[i] || `App ${i + 1}`}
+                  {album.title}
                 </MobileAppIcon>
               ))}
             </div>
@@ -131,18 +148,22 @@ export default function DockApp() {
       <div className="block min-[641px]:hidden">
         <div className="grid-dock">
           <div className="grid grid-cols-3 gap-3 p-4 min-[1920px]:gap-4 min-[1920px]:p-5">
-            {Array.from(Array(9).keys()).map((i) => (
-              <div
-                key={i}
-                className="aspect-square w-14 overflow-hidden rounded-lg min-[1920px]:w-16"
+            {albums.slice(0, 9).map((album) => (
+              <button
+                key={album.slug}
+                type="button"
+                onClick={() => navigateToApp(album.slug)}
+                className="aspect-square w-14 overflow-hidden rounded-lg min-[1920px]:w-16 border-0 p-0 bg-transparent cursor-pointer"
               >
                 <img
-                  src="/icons/macos-folder-original.png"
-                  alt={`App ${i + 1}`}
-                  className="h-full w-full object-contain select-none pointer-events-none"
+                  src={
+                    album.cover_image_src || "/icons/macos-folder-original.png"
+                  }
+                  alt={album.title}
+                  className="h-full w-full object-cover select-none pointer-events-none"
                   draggable={false}
                 />
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -155,10 +176,12 @@ function AppIcon({
   mouseLeft,
   children,
   onOpen,
+  coverImage,
 }: {
   mouseLeft: MotionValue;
   children: ReactNode;
-  onOpen: (appName: string) => void;
+  onOpen: () => void;
+  coverImage?: string | null;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -208,15 +231,15 @@ function AppIcon({
               } catch (_) {
                 // ignore cancellation, still proceed
               }
-              const name = typeof children === "string" ? children : "App";
-              onOpen(name);
+              onOpen();
             }}
             className="aspect-square block w-16 origin-bottom overflow-hidden rounded-xl bg-transparent border-0 p-0 outline-none ring-0 focus:outline-none focus:ring-0 appearance-none"
           >
+            {" "}
             <img
-              src="/icons/macos-folder-original.png"
+              src={coverImage || "/icons/macos-folder-original.png"}
               alt={typeof children === "string" ? children : "App icon"}
-              className="h-full w-full object-contain select-none pointer-events-none"
+              className="h-full w-full object-cover select-none pointer-events-none"
               draggable={false}
             />
           </motion.button>
@@ -239,10 +262,12 @@ function MobileAppIcon({
   mouseLeft,
   children,
   onOpen,
+  coverImage,
 }: {
   mouseLeft: MotionValue;
   children: ReactNode;
-  onOpen: (appName: string) => void;
+  onOpen: () => void;
+  coverImage?: string | null;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -292,15 +317,15 @@ function MobileAppIcon({
               } catch (_) {
                 // ignore cancellation, still proceed
               }
-              const name = typeof children === "string" ? children : "App";
-              onOpen(name);
+              onOpen();
             }}
             className="aspect-square block w-12 min-[480px]:w-14 min-[550px]:w-16 origin-bottom overflow-hidden rounded-lg min-[600px]:rounded-xl bg-transparent border-0 p-0 outline-none ring-0 focus:outline-none focus:ring-0 appearance-none"
           >
+            {" "}
             <img
-              src="/icons/macos-folder-original.png"
+              src={coverImage || "/icons/macos-folder-original.png"}
               alt={typeof children === "string" ? children : "App icon"}
-              className="h-full w-full object-contain select-none pointer-events-none"
+              className="h-full w-full object-cover select-none pointer-events-none"
               draggable={true}
             />
           </motion.button>

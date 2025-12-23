@@ -30,3 +30,4 @@ pnpm-debug.log*
 .clinerules/copilot rules.md
 .gitignore
 .github/copilot-instructions.md
+.wrangler/

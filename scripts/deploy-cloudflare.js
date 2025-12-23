@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { execSync } from "child_process";
-import { writeFileSync } from "fs";
-import { join } from "path";
+import { execSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const ENV = process.env.NODE_ENV || "production";
 const PROJECT_NAME = "ma-galerie";

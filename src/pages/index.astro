@@ -1,39 +1,61 @@
 ---
 import { Image } from "astro:assets";
+import Hero from "~/components/Hero.astro";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import "@fancyapps/ui/dist/fancybox/fancybox.css";
 
-const images = import.meta.glob<{ default: ImageMetadata }>(
-  "../../public/images/*.{jpg,jpeg,png,webp}",
-);
+// Fetch all images from all albums from D1
+const db = Astro.locals.runtime.env.DB;
+const { results: imagesData } = await db
+  .prepare(`
+    SELECT i.* FROM images i
+    LEFT JOIN albums a ON i.album_id = a.id
+    ORDER BY i.created_at DESC
+  `)
+  .all();
 
-// Pre-load critical images
-const criticalImages = Object.entries(images).slice(0, 8);
-const lazyImages = Object.entries(images).slice(8);
+type ImageData = {
+  id: number;
+  src: string;
+  width: number;
+  height: number;
+  alt: string | null;
+  album_id?: number;
+};
+
+const images = (imagesData || []) as unknown as ImageData[];
+
+// Pre-load critical images (first 6)
+const criticalImages = images.slice(0, 6);
+const lazyImages = images.slice(6);
 ---
 
 <BaseLayout
   title="Ma Galerie"
   description="A collection of my favorite photos."
 >
+  <Hero />
+  
   <section class="justified-gallery" id="photoswipe">
     <!-- Critical images loaded eagerly -->
     {
-      criticalImages.map(async ([_path, image], index) => {
-        const { default: imageData } = await image();
+      criticalImages.map((image, index) => {
         return (
           <a
-            style={`--width: ${imageData.width}; --height: ${imageData.height};`}
-            href={imageData.src}
+            class="gallery-item loaded"
+            style={`--width: ${image.width}; --height: ${image.height};`}
+            href={image.src}
             target="_blank"
             data-fancybox="gallery"
             data-index={index}
           >
+            <div class="skeleton-loader"></div>
             <Image
               format="webp"
-              src={imageData}
-              alt="Gallery image"
-              height={400}
+              src={image.src}
+              width={image.width}
+              height={image.height}
+              alt={image.alt || "Gallery image"}
               loading="eager"
               decoding="sync"
               fetchpriority="high"
@@ -43,26 +65,28 @@ const lazyImages = Object.entries(images).slice(8);
       })
     }
     
-    <!-- Lazy loaded images -->
+    <!-- Lazy loaded images with skeleton loaders -->
     {
-      lazyImages.map(async ([_path, image], index) => {
-        const { default: imageData } = await image();
+      lazyImages.map((image, index) => {
         return (
           <a
-            style={`--width: ${imageData.width}; --height: ${imageData.height};`}
-            href={imageData.src}
+            class="gallery-item"
+            style={`--width: ${image.width}; --height: ${image.height};`}
+            href={image.src}
             target="_blank"
             data-fancybox="gallery"
-            data-index={index + 8}
+            data-index={index + 6}
+            data-lazy="true"
           >
+            <div class="skeleton-loader active"></div>
             <Image
               format="webp"
-              src={imageData}
-              alt="Gallery image"
-              height={400}
+              src={image.src}
+              width={image.width}
+              height={image.height}
+              alt={image.alt || "Gallery image"}
               loading="lazy"
               decoding="async"
-              fetchpriority="low"
             />
           </a>
         );
@@ -74,32 +98,69 @@ const lazyImages = Object.entries(images).slice(8);
 <script>
   import { Fancybox } from "@fancyapps/ui/dist/fancybox/";
 
-  // Initialize Fancybox with performance optimizations
-  Fancybox.bind("[data-fancybox]");
+  // Initialize Fancybox after DOM is ready
+  function initFancybox() {
+    Fancybox.bind("[data-fancybox]");
+  }
 
-  // Intersection Observer for better lazy loading
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFancybox);
+  } else {
+    initFancybox();
+  }
+
+  // Handle skeleton loaders and image loading
+  function handleImageLoad(link: Element) {
+    const skeleton = link.querySelector('.skeleton-loader');
+    if (skeleton) {
+      skeleton.classList.remove('active');
+    }
+    link.classList.add('loaded');
+  }
+
+  // Setup image load handlers
+  document.querySelectorAll('.gallery-item img').forEach((img) => {
+    const link = img.closest('.gallery-item');
+    if (!link) return;
+
+    const imgEl = img as HTMLImageElement;
+    
+    // For eager loaded images
+    if (imgEl.getAttribute('loading') === 'eager') {
+      if (imgEl.complete) {
+        handleImageLoad(link);
+      } else {
+        imgEl.addEventListener('load', () => handleImageLoad(link), { once: true });
+      }
+    } else {
+      // For lazy loaded images
+      imgEl.addEventListener('load', () => handleImageLoad(link), { once: true });
+    }
+  });
+
+  // Enhanced Intersection Observer for lazy loading
   if ('IntersectionObserver' in window) {
-    const imageObserver = new IntersectionObserver((entries) => {
+    const lazyImageObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          const img = entry.target.querySelector('img');
-          if (img && img.dataset.src) {
-            img.src = img.dataset.src;
-            img.removeAttribute('data-src');
-            imageObserver.unobserve(entry.target);
+          const link = entry.target as HTMLElement;
+          const img = link.querySelector('img');
+          
+          if (img && link.dataset.lazy === 'true') {
+            // Trigger native lazy loading
+            link.removeAttribute('data-lazy');
+            lazyImageObserver.unobserve(link);
           }
         }
       });
     }, {
-      rootMargin: '50px 0px',
-      threshold: 0.1
+      rootMargin: '100px 0px',
+      threshold: 0.01
     });
 
     // Observe lazy images
-    document.querySelectorAll('[data-fancybox]').forEach((link, index) => {
-      if (index >= 8) {
-        imageObserver.observe(link);
-      }
+    document.querySelectorAll('[data-lazy="true"]').forEach((link) => {
+      lazyImageObserver.observe(link);
     });
   }
 </script>
@@ -115,40 +176,84 @@ const lazyImages = Object.entries(images).slice(8);
     flex-wrap: wrap;
     gap: var(--space);
 
-    a {
-      flex-grow: calc(var(--width) * (100000 / var(--height)));
-      flex-basis: calc(var(--min-height) * (var(--width) / var(--height)));
-      aspect-ratio: var(--width) / var(--height);
-      overflow: hidden;
-      opacity: 1;
-      transition: all 0.05s ease-in-out;
-    }
-
-    a img {
-      display: block;
-      object-fit: cover;
-      height: 100%;
-      width: 100%;
-    }
-
-    a:focus-visible {
-      outline: 3px solid var(--outline);
-      outline-offset: 2px;
-      transform: scale(1.05);
-      z-index: 1;
-      border-radius: 2px;
-      box-shadow: 0 2px 4px 2px rgb(0 0 0 / 10%);
-    }
-
-    a.hidden {
-      transition: opacity 0.4s ease-in-out;
-      opacity: 0;
-    }
-
     &::after {
       content: " ";
       flex-grow: 1000000000;
     }
+  }
+
+  .gallery-item {
+    position: relative;
+    flex-grow: calc(var(--width) * (100000 / var(--height)));
+    flex-basis: calc(var(--min-height) * (var(--width) / var(--height)));
+    aspect-ratio: var(--width) / var(--height);
+    overflow: hidden;
+    transition: all 0.05s ease-in-out;
+  }
+
+  .gallery-item img {
+    display: block;
+    object-fit: cover;
+    height: 100%;
+    width: 100%;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .gallery-item.loaded img {
+    opacity: 1;
+  }
+
+  .gallery-item:focus-visible {
+    outline: 3px solid var(--outline);
+    outline-offset: 2px;
+    transform: scale(1.05);
+    z-index: 1;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px 2px rgb(0 0 0 / 10%);
+  }
+
+  /* Skeleton Loader */
+  .skeleton-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      #f0f0f0 0%,
+      #e8e8e8 20%,
+      #f0f0f0 40%,
+      #f0f0f0 100%
+    );
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none;
+  }
+
+  .skeleton-loader.active {
+    opacity: 1;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  .gallery-item.loaded .skeleton-loader {
+    opacity: 0;
+  }
+
+  .gallery-item.hidden {
+    transition: opacity 0.4s ease-in-out;
+    opacity: 0;
   }
 
   /* 4K scaling */
@@ -164,6 +269,19 @@ const lazyImages = Object.entries(images).slice(8);
       --f-button-width: 52px;
       --f-button-height: 52px;
       --f-toolbar-padding: 20px;
+    }
+  }
+
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .skeleton-loader {
+      background: linear-gradient(
+        90deg,
+        #2a2a2a 0%,
+        #333333 20%,
+        #2a2a2a 40%,
+        #2a2a2a 100%
+      );
     }
   }
 </style>

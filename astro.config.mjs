@@ -4,7 +4,7 @@ import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
-  site: "https://aazainkhan.com",
+  site: "https://magalarie.aazainkhan.com",
   devToolbar: {
     enabled: false,
   },
@@ -14,6 +14,11 @@ export default defineConfig({
     defaultStrategy: "hover",
   },
   vite: {
+    server: {
+      watch: {
+        ignored: ["**/.wrangler/**", "**/node_modules/**", "**/.git/**"],
+      },
+    },
     ssr: {
       noExternal: ["smartypants"],
     },

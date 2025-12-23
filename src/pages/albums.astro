@@ -2,7 +2,39 @@
 import DockApp from "~/components/DockApp";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 
-// DockApp no longer takes items; the icons are mocked internally for the demo
+// Fetch albums from D1
+const db = Astro.locals.runtime.env.DB;
+const { results: albumsData } = await db
+  .prepare(`
+    SELECT 
+      a.*,
+      i.src as cover_image_src
+    FROM albums a
+    LEFT JOIN images i ON a.cover_image_id = i.id
+    ORDER BY a.created_at DESC
+  `)
+  .all();
+
+type Album = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  created_at: string;
+  cover_image_id: number | null;
+  cover_image_src: string | null;
+};
+
+// Convert D1 results to plain objects to avoid serialization issues
+const albums: Album[] = (albumsData || []).map((a: any) => ({
+  id: a.id,
+  title: a.title,
+  slug: a.slug,
+  description: a.description,
+  created_at: a.created_at,
+  cover_image_id: a.cover_image_id,
+  cover_image_src: a.cover_image_src,
+}));
 ---
 
 <BaseLayout title="Albums" description="Explore photo albums with a Mac dock.">
@@ -12,12 +44,20 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 	</div>
 
     <!-- Albums header for desktop (centered) -->
-		<main class="desktop-header" style="min-height: clamp(360px, 70dvh, 520px); padding-top: clamp(2rem, 5dvh, 5rem);">
+	<main class="desktop-header" style="min-height: clamp(360px, 70dvh, 520px); padding-top: clamp(2rem, 5dvh, 5rem);">
         <h1 style="font-size: clamp(32px, 8vw, 58px); opacity: .8; font-family: PPEditorialNew-Ultralight, sans-serif; font-display: swap; text-align: center;">Albums</h1>
  	</main>
 
-	{/* React island dock at the bottom */}
-	<DockApp client:load />
+	{/* Dock display of albums */}
+	{albums.length > 0 ? (
+		<DockApp albums={albums} client:load />
+	) : (
+		<section class="albums-container">
+			<div class="empty-state">
+				<p>No albums yet. Create one in the admin panel!</p>
+			</div>
+		</section>
+	)}
 </BaseLayout>
 
 <style>
@@ -25,6 +65,19 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
   @media (width >= 1920px) {
     .desktop-header { min-height: clamp(420px, 70dvh, 640px); }
     .desktop-header h1 { font-size: clamp(40px, 8vw, 72px) !important; }
+  }
+
+  .albums-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem clamp(16px, 4vw, 32px);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text);
+    opacity: 0.6;
   }
 </style>
 

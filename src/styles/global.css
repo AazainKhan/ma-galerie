@@ -1,0 +1,747 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: Michroma;
+  src: url("/fonts/Michroma-Regular.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* PPEditorialNew Ultralight Italic for nav links */
+@font-face {
+  font-family: PPEditorialNew;
+  src: url("/fonts/PPEditorialNew-Ultralight.woff2") format("woff2");
+  font-weight: 200;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #fff;
+  --bg-dark: #151515;
+  --outline: #fff;
+  --font:
+    system-ui, "Segoe UI", roboto, helvetica, arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+  /* Defaults (will be overridden by [data-theme]) */
+  --bg-app: var(--bg);
+  --text: #111;
+  --link: #0a66c2;
+  --grid-line: rgb(0 0 0 / 6%);
+  --header-bg: rgb(255 255 255 / 70%);
+  --button-bg: #000;
+  --button-text: #fff;
+  --button-shadow: #fff;
+
+  /* Dock colors */
+  --dock-bg: rgba(243, 244, 246, 0.85);
+  --dock-border: rgba(209, 213, 219, 0.8);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-app: var(--bg);
+  --text: #111;
+  --link: #0a66c2;
+  --grid-line: color-mix(in oklab, var(--text) 10%, transparent);
+  --header-bg: color-mix(in oklab, var(--bg) 86%, black 0%);
+  --button-bg: #000;
+  --button-text: #fff;
+  --button-shadow: #fff;
+
+  /* Dock colors - light */
+  --dock-bg: rgba(243, 244, 246, 0.85);
+  --dock-border: rgba(209, 213, 219, 0.8);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-app: var(--bg-dark);
+  --text: #eee;
+  --link: #6ab0ff;
+  --grid-line: color-mix(in oklab, var(--text) 12%, transparent);
+  --header-bg: color-mix(in oklab, var(--bg-dark) 80%, white 0%);
+  --button-bg: #fff;
+  --button-text: #000;
+  --button-shadow: #000;
+
+  /* Dock colors - dark */
+  --dock-bg: rgba(55, 65, 81, 0.9);
+  --dock-border: rgba(75, 85, 99, 1);
+}
+
+body {
+  background-color: var(--bg-app);
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font);
+}
+
+/* Links */
+a {
+  color: var(--link);
+  text-decoration-color: color-mix(in oklab, var(--link) 50%, transparent);
+}
+
+a:hover {
+  text-decoration-color: var(--link);
+}
+
+/* Header / Navbar */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  background: var(--header-bg);
+  border-bottom: 1px solid
+    color-mix(in oklab, var(--grid-line) 60%, transparent);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px clamp(16px, 4vw, 32px);
+}
+
+.nav .brand a {
+  font-family: PPEditorialNew, serif;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 200;
+  letter-spacing: 0.2px;
+  font-size: clamp(1.75rem, 1vw + 1rem, 2.5rem);
+}
+
+.nav .spacer {
+  flex: 1 1 auto;
+}
+
+.nav .links {
+  display: none;
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+  margin: 0 8px 0 0;
+}
+
+@media (width >= 640px) {
+  .nav .links {
+    display: flex;
+  }
+}
+
+.nav .links a {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.8;
+  font-family: PPEditorialNew, serif;
+  font-weight: 200;
+
+  /* Increase clickable size */
+  padding: 8px 12px;
+  font-size: clamp(1.05rem, 0.5vw + 0.95rem, 1.25rem);
+  line-height: 1.2;
+}
+
+.mobile-menu .links a {
+  color: inherit;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: PPEditorialNew, serif;
+  font-weight: 200;
+
+  /* Larger, readable mobile menu link size */
+  font-size: clamp(1.3rem, 3.5vw, 1.375rem);
+  line-height: 1.35;
+}
+
+.nav .links a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+@media (width <= 639px) {
+  .nav {
+    /* Increase mobile navbar height */
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  /* Make hamburger and theme toggle buttons larger on mobile */
+  .menu-toggle,
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .menu-toggle svg,
+  .theme-toggle svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* When mobile menu is open, remove the header's bottom border for a seamless surface */
+@media (width <= 639px) {
+  .no-scroll .site-header {
+    border-bottom-color: transparent;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--grid-line);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.25s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.02) rotate(10deg);
+  background-color: color-mix(in oklab, var(--grid-line) 40%, transparent);
+}
+
+.theme-toggle .icon-sun {
+  display: none;
+}
+
+.theme-toggle .icon-moon {
+  display: block;
+}
+
+:root[data-theme="dark"] .theme-toggle .icon-sun {
+  display: block;
+}
+
+:root[data-theme="dark"] .theme-toggle .icon-moon {
+  display: none;
+}
+
+/* Hamburger button */
+.menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--grid-line);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Hide on >=640px since desktop nav is visible there */
+@media (width >= 640px) {
+  .menu-toggle {
+    display: none;
+  }
+}
+
+/* Mobile menu panel */
+.mobile-menu {
+  /* Anchor directly below the sticky header */
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+
+  /* Match navbar background/blur for seamless look */
+  background: var(--header-bg);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(12px); /* Safari support */
+  padding: 16px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 16px;
+  transform: translateY(-8px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    backdrop-filter 0.3s ease;
+}
+
+.mobile-menu.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.mobile-menu .links {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+}
+
+.mobile-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Prevent body scroll when menu is open */
+.no-scroll body {
+  overflow: hidden;
+}
+
+/* Hide scrollbar for mobile dock */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+
+/* 3x3 Grid Dock Styles */
+.grid-dock {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 16%) 0%,
+      rgb(255 255 255 / 8%) 30%,
+      rgb(255 255 255 / 4%) 100%
+    ), rgb(16 16 18 / 35%);
+  backdrop-filter: saturate(1.8) blur(18px);
+  box-shadow:
+    0 16px 40px rgb(0 0 0 / 35%),
+    0 2px 8px rgb(0 0 0 / 25%);
+  border: 1px solid rgb(255 255 255 / 18%);
+}
+
+/* Responsive album headers */
+.mobile-header {
+  display: block;
+  padding: 0 1rem;
+}
+
+.desktop-header {
+  display: none;
+}
+
+/* Boost mobile header font size on small screens */
+@media (width <= 639px) {
+  .mobile-header h1 {
+    /* Override inline sizes for better readability on small screens */
+    font-size: clamp(40px, 10vw, 72px) !important;
+  }
+}
+
+@media (width >= 640px) {
+  .mobile-header {
+    display: none;
+  }
+
+  .desktop-header {
+    display: grid;
+    place-items: center;
+  }
+}
+
+/* On tall phones, push the mobile header lower for better balance */
+@media (width <= 640px) and (height >= 780px) {
+  .mobile-header {
+    /* Use small viewport height to account for iOS dynamic bars */
+    padding-top: clamp(2rem, 7svh, 6rem);
+  }
+}
+
+/* Mobile layout adjustments */
+@media (width <= 640px) {
+  .grid-dock {
+    /* Use small viewport height on iOS to account for dynamic bars */
+    top: calc(50svh + 5%);
+  }
+}
+
+/* On tall phones (e.g., 390x844), push the grid a bit lower to add breathing room under the header */
+@media (width <= 639px) and (height >= 780px) {
+  .grid-dock {
+    top: calc(50svh + 14%);
+  }
+}
+
+/* On small, shorter phones (e.g., 375x667), also push the grid down slightly */
+@media (width <= 375px) and (height <= 700px) {
+  .grid-dock {
+    top: calc(50svh + 10%);
+  }
+}
+
+/* Prevent squashed look around 430px wide devices (e.g., iPhone Mini/SE) */
+@media (width <= 430px) {
+  /* Center the 3x3 grid within the floating panel and avoid stretching */
+  .grid-dock .grid {
+    justify-content: center;
+    grid-template-columns: repeat(3, max-content);
+    place-items: center center;
+    gap: 0.625rem; /* 10px */
+    padding: 0.875rem; /* 14px */
+  }
+
+  /* Keep icons compact so the container has breathing room */
+  .grid-dock .grid > div {
+    width: 3rem; /* 48px */
+    background: transparent; /* remove gray background behind icon */
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .grid-dock .grid > div::before,
+  .grid-dock .grid > div::after {
+    display: none;
+  }
+
+  .grid-dock .grid > div:hover {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+}
+
+/* Make the box and icons bigger on tall phones (e.g., 390x844, 393x852) */
+@media (width <= 430px) and (height >= 780px) {
+  .grid-dock .grid {
+    gap: 1rem; /* 16px */
+    padding: 1.25rem; /* 20px */
+  }
+
+  .grid-dock .grid > div {
+    width: 5rem; /* 80px */
+  }
+}
+
+/* Ensure icons don't squash on very small screens */
+@media (width <= 375px) {
+  /* Center the 3x3 grid within the floating panel */
+  .grid-dock .grid {
+    justify-content: center; /* center the whole grid */
+    grid-template-columns: repeat(3, max-content); /* tracks sized to icon width */
+    place-items: center center; /* center items inside each cell */
+    gap: 0.75rem; /* 12px spacing for breathing room */
+    padding: 1rem; /* larger padding to enlarge the box */
+  }
+
+  /* Slightly smaller icons so spacing remains even */
+  .grid-dock .grid > div {
+    width: 4rem; /* 64px; make boxes and icons bigger on very small screens */
+  }
+}
+
+/* Override for tall 375px-wide phones (e.g., 375x812): make box even bigger */
+@media (width <= 375px) and (height >= 780px) {
+  .grid-dock .grid {
+    gap: 0.875rem; /* 14px */
+    padding: 1.25rem; /* 20px */
+  }
+
+  .grid-dock .grid > div {
+    width: 4.5rem; /* 72px */
+  }
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not (
+    (-webkit-backdrop-filter: blur(0)) or
+    (backdrop-filter: blur(0))
+  ) {
+  .grid-dock {
+    background: rgb(22 22 24 / 80%);
+  }
+}
+
+/* Button-50 Style for Social Links */
+.social-link {
+  position: relative;
+  background-color: var(--button-bg) !important;
+  background-image: none;
+  border-radius: 4px !important;
+  border: 1px solid var(--button-bg) !important;
+  box-shadow:
+    var(--button-shadow) 4px 4px 0 0,
+    var(--button-bg) 4px 4px 0 1px;
+  box-sizing: border-box;
+  color: var(--button-text) !important;
+  cursor: pointer;
+  display: flex;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  overflow: visible;
+  padding: 12px 40px;
+  text-align: center;
+  touch-action: manipulation;
+  user-select: none;
+  vertical-align: middle;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+/* removed duplicate .social-link .social-icon block (duplicate of line above) */
+
+.social-link:hover {
+  text-decoration: none;
+  background-color: var(--button-bg) !important;
+  border: 1px solid var(--button-bg) !important;
+  color: var(--button-text) !important;
+}
+
+.social-link:active {
+  box-shadow: rgb(0 0 0 / 12.5%) 0 3px 5px inset;
+  outline: 0;
+}
+
+.social-link:not([disabled]):active {
+  box-shadow:
+    var(--button-shadow) 2px 2px 0 0,
+    var(--button-bg) 2px 2px 0 1px;
+  transform: translate(2px, 2px);
+}
+
+.social-link .social-icon {
+  color: var(--button-text) !important;
+  stroke: var(--button-text) !important;
+  fill: none !important;
+  z-index: 2;
+  position: relative;
+  margin-right: 0; /* Override any existing margin to prevent issues */
+}
+
+.social-link span {
+  z-index: 2;
+  position: relative;
+  color: var(--button-text) !important;
+}
+
+@media (width >= 768px) {
+  .social-link {
+    padding: 12px 50px;
+  }
+}
+
+/* ===== Admin Panel Styles ===== */
+/* Uses CSS variables to automatically match site theme */
+
+.admin-panel {
+  background-color: var(--bg-app);
+  color: var(--text);
+}
+
+.admin-header {
+  background-color: color-mix(in oklab, var(--bg-app) 95%, var(--text) 5%);
+  border-bottom: 1px solid var(--grid-line);
+  backdrop-filter: blur(12px);
+}
+
+.admin-card {
+  background-color: color-mix(in oklab, var(--bg-app) 100%, var(--text) 2%);
+  border: 1px solid var(--grid-line);
+}
+
+.admin-card-inner {
+  background-color: var(--bg-app);
+  border: 1px solid var(--grid-line);
+}
+
+.admin-input {
+  background-color: var(--bg-app);
+  border: 1px solid var(--grid-line);
+  color: var(--text);
+}
+
+.admin-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--text) 20%, transparent);
+}
+
+.admin-input::placeholder {
+  color: color-mix(in oklab, var(--text) 50%, transparent);
+}
+
+.admin-button {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.admin-button:hover {
+  opacity: 0.9;
+}
+
+.admin-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-button-ghost {
+  background-color: transparent;
+  color: color-mix(in oklab, var(--text) 60%, transparent);
+  border: none;
+}
+
+.admin-button-ghost:hover {
+  background-color: color-mix(in oklab, var(--text) 10%, transparent);
+  color: var(--text);
+}
+
+.admin-text-muted {
+  color: color-mix(in oklab, var(--text) 60%, transparent);
+}
+
+.admin-text-primary {
+  color: var(--text);
+}
+
+.admin-bg-muted {
+  background-color: color-mix(in oklab, var(--text) 5%, transparent);
+}
+
+.admin-bg-hover:hover {
+  background-color: color-mix(in oklab, var(--text) 8%, transparent);
+}
+
+.admin-border {
+  border-color: var(--grid-line);
+}
+
+.admin-toggle-group {
+  background-color: color-mix(in oklab, var(--text) 8%, transparent);
+  padding: 0.125rem;
+  border-radius: 0.375rem;
+  display: inline-flex;
+}
+
+.admin-toggle-item {
+  padding: 0.375rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+  background-color: transparent;
+  color: var(--text);
+  border: none;
+  cursor: pointer;
+}
+
+.admin-toggle-item.active {
+  background-color: var(--bg-app);
+  box-shadow: 0 1px 2px color-mix(in oklab, black 10%, transparent);
+}
+
+.admin-toggle-item:not(.active):hover {
+  background-color: color-mix(in oklab, var(--text) 12%, transparent);
+}
+
+.admin-dropzone {
+  border: 2px dashed var(--grid-line);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-dropzone:hover {
+  border-color: color-mix(in oklab, var(--text) 30%, transparent);
+}
+
+.admin-dropzone.active {
+  border-color: var(--link);
+  background-color: color-mix(in oklab, var(--link) 10%, transparent);
+}
+
+.admin-image-card {
+  background-color: var(--bg-app);
+  border: 1px solid var(--grid-line);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.admin-image-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.admin-image-card:hover .admin-image-overlay {
+  background-color: color-mix(in oklab, black 10%, transparent);
+}
+
+.admin-icon-btn {
+  padding: 0.375rem;
+  border-radius: 9999px;
+  transition: all 0.2s;
+  background-color: transparent;
+  color: color-mix(in oklab, var(--text) 50%, transparent);
+}
+
+.admin-icon-btn:hover {
+  background-color: color-mix(in oklab, var(--text) 10%, transparent);
+  color: var(--text);
+}
+
+.admin-icon-btn.danger:hover {
+  background-color: color-mix(in oklab, #ef4444 15%, transparent);
+  color: #ef4444;
+}
+
+.admin-icon-btn.success {
+  color: #22c55e;
+}
+
+.admin-icon-btn.success:hover {
+  background-color: color-mix(in oklab, #22c55e 15%, transparent);
+}

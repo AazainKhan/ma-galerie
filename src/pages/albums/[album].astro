@@ -1,45 +1,50 @@
 ---
+import { Image } from "astro:assets";
 import BaseLayout from "~/layouts/BaseLayout.astro";
+import "@fancyapps/ui/dist/fancybox/fancybox.css";
 
-const { album } = Astro.params;
-const title = (album ?? "album")
+const { album: slug } = Astro.params;
+const title = (slug ?? "album")
   .replace(/-/g, " ")
   .replace(/\b\w/g, (c) => c.toUpperCase());
+
+const db = Astro.locals.runtime.env.DB;
+
+// 1. Get Album ID
+const { results: albums } = await db
+  .prepare("SELECT * FROM albums WHERE slug = ?")
+  .bind(slug)
+  .all();
+
+const albumData = albums[0];
+
+// Convert D1 results to plain objects to avoid serialization issues
+const imagesData = albumData
+  ? (
+      await db
+        .prepare(
+          "SELECT * FROM images WHERE album_id = ? ORDER BY created_at DESC",
+        )
+        .bind(albumData.id)
+        .all()
+    ).results
+  : [];
+
+const images = imagesData.map((img: any) => ({
+  id: img.id,
+  src: img.src,
+  width: img.width,
+  height: img.height,
+  alt: img.alt,
+  album_id: img.album_id,
+  created_at: img.created_at,
+}));
 ---
 
 <BaseLayout title={title} description={`Viewing album: ${title}`}>
-  <style>
-    @keyframes page-fade-in {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .page-fade-in { animation: page-fade-in 200ms ease-out; }
-
-    /* Light defaults (scoped) */
-    .album-breadcrumb { color: #4b5563 !important; } /* gray-600 */
-    .album-breadcrumb a { color: #374151 !important; } /* gray-700 */
-    .album-breadcrumb .sep { color: #6b7280 !important; } /* gray-500 */
-    .album-breadcrumb .current { color: #111827 !important; } /* gray-900 */
-    .album-title {
-      color: #111827 !important; /* gray-900 */
-      font-family: PPEditorialNew, serif !important; /* match nav links */
-      font-weight: 200 !important; /* Ultralight like nav links */
-    }
-
-    /* Dark overrides must be global to escape Astro's style scoping */
-    :global(.dark) .album-breadcrumb { color: #d1d5db !important; } /* gray-300 */
-    :global(.dark) .album-breadcrumb a { color: #e5e7eb !important; } /* gray-200 */
-    :global(.dark) .album-breadcrumb .sep { color: #9ca3af !important; } /* gray-400 */
-    :global(.dark) .album-breadcrumb .current { color: #f3f4f6 !important; } /* gray-100 */
-    :global(.dark) .album-title {
-      color: rgba(255,255,255,.9) !important;
-      font-family: PPEditorialNew, serif !important;
-      font-weight: 200 !important;
-    }
-  </style>
-  <main class="flex min-h-[60dvh] flex-col px-4 py-10" style="display:flex;min-height:60dvh;flex-direction:column;padding:2.5rem 1rem;">
+  <main class="album-main">
     <!-- Breadcrumb at top-left, under nav -->
-    <div class="mx-auto w-full max-w-[1200px]" style="padding-left: clamp(16px, 4vw, 32px); padding-right: clamp(16px, 4vw, 32px);">
+    <div class="album-breadcrumb-container">
       <nav aria-label="Breadcrumb" class="album-breadcrumb text-sm flex items-center gap-2">
         <a href="/albums" class="hover:underline">← Albums</a>
         <span class="sep">/</span>
@@ -48,10 +53,142 @@ const title = (album ?? "album")
     </div>
 
     <!-- Centered content block -->
-    <div class="flex-1 flex items-center justify-center" style="display:flex;align-items:center;justify-content:center;">
-      <div class="page-fade-in w-full max-w-4xl text-center" style="text-align:center;width:100%;max-width:64rem;margin:0 auto;">
-        <h1 class="album-title mt-4 text-4xl font-light tracking-wide">{title}</h1>
-      </div>
+    <div class="mx-auto w-full max-w-[1600px] mt-8">
+      <h1 class="album-title text-4xl md:text-6xl text-center mb-12">{title}</h1>
+      
+      {images.length > 0 ? (
+        <section class="justified-gallery" id="photoswipe">
+          {images.map((image: any, index: number) => (
+            <a
+              style={`--width: ${image.width}; --height: ${image.height};`}
+              href={image.src}
+              target="_blank"
+              data-fancybox="gallery"
+              data-index={index}
+            >
+              <Image
+                format="webp"
+                src={image.src}
+                width={image.width}
+                height={image.height}
+                alt={image.alt || "Gallery image"}
+                loading="lazy"
+                decoding="async"
+              />
+            </a>
+          ))}
+        </section>
+      ) : (
+        <p class="text-center text-gray-500">No images in this album yet.</p>
+      )}
     </div>
   </main>
+  
+  <script>
+    import { Fancybox } from "@fancyapps/ui";
+    
+    // Ensure DOM is fully loaded before initializing
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        Fancybox.bind("[data-fancybox]", {});
+      });
+    } else {
+      Fancybox.bind("[data-fancybox]", {});
+    }
+  </script>
 </BaseLayout>
+
+<style>
+  .album-main {
+    display: flex;
+    min-height: 60dvh;
+    flex-direction: column;
+    padding: 2.5rem 1rem;
+  }
+
+  .album-breadcrumb-container {
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1200px;
+    padding-left: clamp(16px, 4vw, 32px);
+    padding-right: clamp(16px, 4vw, 32px);
+  }
+
+  @keyframes page-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .page-fade-in { animation: page-fade-in 200ms ease-out; }
+
+  /* Light defaults (scoped) */
+  .album-breadcrumb { color: #4b5563 !important; } /* gray-600 */
+  .album-breadcrumb a { color: #374151 !important; } /* gray-700 */
+  .album-breadcrumb .sep { color: #6b7280 !important; } /* gray-500 */
+  .album-breadcrumb .current { color: #111827 !important; } /* gray-900 */
+  .album-title {
+    color: #111827 !important; /* gray-900 */
+    font-family: PPEditorialNew, serif !important;
+    font-weight: 200 !important;
+  }
+
+  /* Dark overrides must be global to escape Astro's style scoping */
+  :global(.dark) .album-breadcrumb { color: #d1d5db !important; } /* gray-300 */
+  :global(.dark) .album-breadcrumb a { color: #e5e7eb !important; } /* gray-200 */
+  :global(.dark) .album-breadcrumb .sep { color: #9ca3af !important; } /* gray-400 */
+  :global(.dark) .album-breadcrumb .current { color: #f3f4f6 !important; } /* gray-100 */
+  :global(.dark) .album-title {
+    color: rgba(255,255,255,.9) !important;
+    font-family: PPEditorialNew, serif !important;
+    font-weight: 200 !important;
+  }
+
+  /* Justified Gallery Layout */
+  .justified-gallery {
+    --padding: max(2.5vw, 12px);
+    --space: max(2.5vw, 12px);
+    --min-height: clamp(200px, 20vw, 400px);
+
+    padding: var(--padding);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space);
+  }
+
+  .justified-gallery a {
+    flex-grow: calc(var(--width) * (100000 / var(--height)));
+    flex-basis: calc(var(--min-height) * (var(--width) / var(--height)));
+    aspect-ratio: var(--width) / var(--height);
+    overflow: hidden;
+    transition: all 0.05s ease-in-out;
+  }
+
+  .justified-gallery a img {
+    display: block;
+    object-fit: cover;
+    height: 100%;
+    width: 100%;
+  }
+
+  .justified-gallery a:focus-visible {
+    outline: 3px solid var(--outline);
+    outline-offset: 2px;
+    transform: scale(1.05);
+    z-index: 1;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px 2px rgb(0 0 0 / 10%);
+  }
+
+  .justified-gallery::after {
+    content: " ";
+    flex-grow: 1000000000;
+  }
+
+  /* 4K scaling */
+  @media (width >= 1920px) {
+    .justified-gallery {
+      --padding: max(2vw, 24px);
+      --space: max(2vw, 20px);
+      --min-height: clamp(280px, 18vw, 520px);
+    }
+  }
+</style>

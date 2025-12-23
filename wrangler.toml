@@ -12,6 +12,11 @@ binding = "IMAGES"
 bucket_name = "ma-galerie-images"
 preview_bucket_name = "ma-galerie-images-preview"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "ma-galerie-db"
+database_id = "85d47795-412f-41f8-bd09-2eddb26619cf"
+
 # Environment variables
 [vars]
 NODE_ENV = "production"

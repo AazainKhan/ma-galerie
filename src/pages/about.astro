@@ -1,5 +1,12 @@
 ---
 import BaseLayout from "~/layouts/BaseLayout.astro";
+
+const gearItems = [
+  { name: "Sony A7IV", category: "Body", icon: "📷" },
+  { name: "Sony 35mm f/1.4 GM", category: "Lens", icon: "🔍" },
+  { name: "Sony 85mm f/1.8", category: "Lens", icon: "🔍" },
+  { name: "Peak Design Tripod", category: "Accessory", icon: "📐" },
+];
 ---
 
 <BaseLayout title="About" description="Learn more about Ma Galerie and my photography journey.">
@@ -43,28 +50,27 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 					Behind every great photograph is the right equipment. Here's a look at the gear that helps bring these images to life.
 				</p>
 				<div class="gear-grid">
-					<!-- Add your gear images here -->
-					<div class="gear-item">
-						<div class="gear-placeholder">
-							<span>Camera Body</span>
+					{gearItems.map((item) => (
+						<div class="gear-item">
+							<div class="gear-placeholder">
+								<span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">{item.icon}</span>
+								<span style="font-weight: 600; color: #333;">{item.name}</span>
+								<span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.25rem;">{item.category}</span>
+							</div>
 						</div>
-					</div>
-					<div class="gear-item">
-						<div class="gear-placeholder">
-							<span>Lenses</span>
-						</div>
-					</div>
-					<div class="gear-item">
-						<div class="gear-placeholder">
-							<span>Accessories</span>
-						</div>
-					</div>
-					<div class="gear-item">
-						<div class="gear-placeholder">
-							<span>Tripods</span>
-						</div>
-					</div>
+					))}
 				</div>
+			</div>
+		</section>
+
+		<!-- Contact Section -->
+		<section class="contact-section">
+			<div class="contact-content">
+				<h2 class="contact-title">Let's Create</h2>
+				<p class="contact-text">
+					Interested in working together or purchasing a print?
+				</p>
+				<a href="mailto:your-email@example.com" class="button-50" role="button">Get in Touch</a>
 			</div>
 		</section>
 	</main>
@@ -93,7 +99,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 	}
 
 	.about-text {
-		text-align: left;
+		text-align: center;
 		line-height: 1.7;
 	}
 
@@ -111,7 +117,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 	.vision-section {
 		width: 100%;
 		max-width: 900px;
-		margin: 3rem auto 0 auto;
+		margin: 5rem auto 0 auto;
 		padding: 0 clamp(16px, 4vw, 32px);
 	}
 
@@ -141,7 +147,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 	.gear-section {
 		width: 100%;
 		max-width: 1200px;
-		margin-top: 4rem;
+		margin-top: 5rem;
 		padding: 0 clamp(16px, 4vw, 32px);
 	}
 
@@ -150,7 +156,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 	}
 
 	.gear-title {
-font-size: clamp(32px, 8vw, 56px);
+		font-size: clamp(32px, 8vw, 56px);
 		font-family: PPEditorialNew, serif;
 		font-weight: 200;
 		opacity: 0.9;
@@ -189,14 +195,78 @@ font-size: clamp(32px, 8vw, 56px);
 	.gear-placeholder {
 		width: 100%;
 		height: 100%;
-		background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+		background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		font-size: 18px;
 		font-weight: 500;
 		color: #666;
-		border: 2px dashed #ccc;
+		border: 1px solid #eee;
+	}
+
+	/* Contact Section Styles */
+	.contact-section {
+		width: 100%;
+		max-width: 800px;
+		margin: 6rem auto 4rem auto;
+		padding: 0 clamp(16px, 4vw, 32px);
+		text-align: center;
+	}
+
+	.contact-title {
+		font-size: clamp(32px, 6vw, 48px);
+		font-family: PPEditorialNew, serif;
+		font-weight: 200;
+		margin-bottom: 1rem;
+	}
+
+	.contact-text {
+		font-size: clamp(18px, 2vw, 20px);
+		opacity: 0.8;
+		margin-bottom: 2rem;
+	}
+
+	.button-50 {
+		display: inline-flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 2rem;
+		border: 2px solid var(--button-bg);
+		border-radius: 4px;
+		background: var(--button-bg);
+		color: var(--button-text);
+		text-decoration: none;
+		font-family: PPEditorialNew, serif;
+		font-weight: 200;
+		font-size: 1.1rem;
+		box-shadow: 4px 4px 0 0 var(--button-text), 6px 6px 0 0 var(--button-bg);
+		transition: transform 0.1s ease, box-shadow 0.1s ease;
+		min-width: 180px;
+		justify-content: center;
+		cursor: pointer;
+		text-transform: none;
+		touch-action: manipulation;
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
+	.button-50:focus {
+		outline: none;
+		text-decoration: none;
+	}
+
+	.button-50:active {
+		box-shadow: 2px 2px 0 0 var(--button-text), 3px 3px 0 0 var(--button-bg);
+		transform: translate(2px, 2px);
+		text-decoration: none;
+	}
+
+	@media (width >= 768px) {
+		.button-50 {
+			padding: 1rem 2.5rem;
+		}
 	}
 
 	.gear-placeholder span {
@@ -204,7 +274,7 @@ font-size: clamp(32px, 8vw, 56px);
 	}
 
 	/* Large screens - maintain size */
- 	@media (width >= 1440px) {
+	@media (width >= 1440px) {
 		.about-container {
 			padding: 5rem 2rem;
 		}
@@ -212,17 +282,6 @@ font-size: clamp(32px, 8vw, 56px);
 		.about-content {
 			max-width: 800px;
 		}
-
-	/* 4K scaling */
-	@media (width >= 1920px) {
-		.about-container { padding: 6rem 3rem; }
-		.about-content { max-width: 960px; }
-		.about-title { font-size: 64px; }
-		.about-text p { font-size: 22px; }
-		.gear-title { font-size: 64px; }
-		.gear-description { font-size: 22px; max-width: 720px; }
-		.gear-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
-	}
 
 		.about-title {
 			font-size: 56px;
@@ -233,7 +292,7 @@ font-size: clamp(32px, 8vw, 56px);
 		}
 
 		.gear-title {
- font-size: 56px;
+			font-size: 56px;
 		}
 
 		.gear-description {
@@ -242,6 +301,39 @@ font-size: clamp(32px, 8vw, 56px);
 
 		.gear-section {
 			padding: 0 2rem;
+		}
+	}
+
+	/* 4K scaling */
+	@media (width >= 1920px) {
+		.about-container {
+			padding: 6rem 3rem;
+		}
+
+		.about-content {
+			max-width: 960px;
+		}
+
+		.about-title {
+			font-size: 64px;
+		}
+
+		.about-text p {
+			font-size: 22px;
+		}
+
+		.gear-title {
+			font-size: 64px;
+		}
+
+		.gear-description {
+			font-size: 22px;
+			max-width: 720px;
+		}
+
+		.gear-grid {
+			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+			gap: 2rem;
 		}
 	}
 
@@ -261,6 +353,10 @@ font-size: clamp(32px, 8vw, 56px);
 
 		.about-text p {
 			font-size: 20px; /* Larger text on mobile */
+		}
+
+		.vision-section {
+			margin-top: 3rem;
 		}
 
 		.gear-section {

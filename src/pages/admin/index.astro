@@ -1,0 +1,8 @@
+---
+import AdminDashboard from "~/components/admin/AdminDashboard";
+import BaseLayout from "~/layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Admin Dashboard" description="Manage your gallery">
+  <AdminDashboard client:only="react" />
+</BaseLayout>
