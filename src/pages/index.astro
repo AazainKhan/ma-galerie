@@ -23,7 +23,15 @@ type ImageData = {
   album_id?: number;
 };
 
-const images = (imagesData || []) as unknown as ImageData[];
+// Convert D1 results to plain objects to avoid serialization issues
+const images: ImageData[] = (imagesData || []).map((img: any) => ({
+  id: img.id,
+  src: img.src,
+  width: img.width,
+  height: img.height,
+  alt: img.alt,
+  album_id: img.album_id,
+}));
 
 // Pre-load critical images (first 6)
 const criticalImages = images.slice(0, 6);

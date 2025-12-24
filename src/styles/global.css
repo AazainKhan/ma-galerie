@@ -75,6 +75,16 @@
   --dock-border: rgba(75, 85, 99, 1);
 }
 
+/* Dock surface styling lives in CSS to avoid React hydration mismatches */
+.dock-surface {
+  background-color: var(--dock-bg);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--dock-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 body {
   background-color: var(--bg-app);
   background-image:

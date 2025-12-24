@@ -50,7 +50,7 @@ const albums: Album[] = (albumsData || []).map((a: any) => ({
 
 	{/* Dock display of albums */}
 	{albums.length > 0 ? (
-		<DockApp albums={albums} client:load />
+    <DockApp albums={albums} client:load />
 	) : (
 		<section class="albums-container">
 			<div class="empty-state">

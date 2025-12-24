@@ -47,7 +47,10 @@ export default function LoginForm() {
         )}
 
         <div>
-          <label htmlFor="password-input" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="password-input"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Password
           </label>
           <input

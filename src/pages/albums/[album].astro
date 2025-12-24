@@ -16,7 +16,15 @@ const { results: albums } = await db
   .bind(slug)
   .all();
 
-const albumData = albums[0];
+// Convert album to plain object
+const albumData = albums[0] ? {
+  id: albums[0].id,
+  title: albums[0].title,
+  slug: albums[0].slug,
+  description: albums[0].description,
+  cover_image_id: albums[0].cover_image_id,
+  created_at: albums[0].created_at,
+} : null;
 
 // Convert D1 results to plain objects to avoid serialization issues
 const imagesData = albumData

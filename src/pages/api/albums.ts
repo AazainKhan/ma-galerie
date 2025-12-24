@@ -21,7 +21,18 @@ export const GET: APIRoute = async ({ locals }) => {
     `)
     .all();
 
-  return new Response(JSON.stringify(results), {
+  // Convert to plain objects
+  const albums = (results || []).map((a: any) => ({
+    id: a.id,
+    title: a.title,
+    slug: a.slug,
+    description: a.description,
+    cover_image_id: a.cover_image_id,
+    cover_image_src: a.cover_image_src,
+    created_at: a.created_at,
+  }));
+
+  return new Response(JSON.stringify(albums), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });

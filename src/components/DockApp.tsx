@@ -72,16 +72,10 @@ export default function DockApp({ albums }: DockAppProps) {
           className="relative mx-auto flex h-20 w-fit items-end gap-3 px-3 pb-3 min-[1920px]:h-24 min-[1920px]:gap-4 min-[1920px]:px-4 min-[1920px]:pb-4"
         >
           <motion.div
-            className="absolute inset-y-0 -z-10 rounded-2xl min-[1920px]:rounded-3xl"
+            className="dock-surface absolute inset-y-0 -z-10 rounded-2xl min-[1920px]:rounded-3xl"
             style={{
               left: safeLeft,
               right: safeRight,
-              backgroundColor: "var(--dock-bg)",
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: "var(--dock-border)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
             }}
           />
 
@@ -116,16 +110,10 @@ export default function DockApp({ albums }: DockAppProps) {
             className="relative mx-auto flex h-16 min-[500px]:h-18 min-[600px]:h-20 w-fit max-w-full items-end gap-0.5 min-[430px]:gap-1 min-[460px]:gap-1.5 min-[500px]:gap-2 min-[550px]:gap-2.5 min-[600px]:gap-3 px-1 min-[430px]:px-1.5 min-[460px]:px-2 min-[500px]:px-2.5 min-[600px]:px-3 pb-1 min-[430px]:pb-1.5 min-[460px]:pb-2 min-[500px]:pb-2.5 min-[600px]:pb-3"
           >
             <motion.div
-              className="absolute inset-y-0 -z-10 rounded-xl min-[600px]:rounded-2xl"
+              className="dock-surface absolute inset-y-0 -z-10 rounded-xl min-[600px]:rounded-2xl"
               style={{
                 left: safeLeft,
                 right: safeRight,
-                backgroundColor: "var(--dock-bg)",
-                borderWidth: "1px",
-                borderStyle: "solid",
-                borderColor: "var(--dock-border)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
               }}
             />
             <div className="flex items-end gap-0.5 min-[430px]:gap-1 min-[460px]:gap-1.5 min-[500px]:gap-2 min-[550px]:gap-2.5 min-[600px]:gap-3 overflow-hidden">

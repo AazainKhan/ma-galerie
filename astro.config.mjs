@@ -4,7 +4,10 @@ import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
-  site: "https://magalarie.aazainkhan.com",
+  site: "https://magalerie.aazainkhan.com",
+  session: {
+    driver: "memory",
+  },
   devToolbar: {
     enabled: false,
   },
@@ -43,8 +46,8 @@ export default defineConfig({
       enabled: true,
     },
     runtime: {
-      mode: "remote",
-      type: "pages",
+      mode: "local",
+      type: "workers",
     },
     routes: {
       strategy: "include",
