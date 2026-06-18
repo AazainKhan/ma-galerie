@@ -31,3 +31,4 @@ pnpm-debug.log*
 .gitignore
 .github/copilot-instructions.md
 .wrangler/
+.dev.vars

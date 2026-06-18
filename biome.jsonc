@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.1.4/schema.json",
   "files": {
     "includes": [
       "**",
@@ -10,7 +10,8 @@
       "!**/.vercel",
       "!**/.netlify",
       "!**/.vscode",
-      "!**/.astro"
+      "!**/.astro",
+      "!**/.claude"
     ]
   },
   "formatter": {
@@ -20,7 +21,28 @@
     "lineEnding": "lf"
   },
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
-  "linter": { "enabled": true, "rules": { "recommended": true } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noArrayIndexKey": "warn",
+        "noDocumentCookie": "warn",
+        "noDoubleEquals": "warn"
+      },
+      "correctness": {
+        "noUnusedFunctionParameters": "warn",
+        "useExhaustiveDependencies": "warn"
+      },
+      "a11y": {
+        "noStaticElementInteractions": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useIframeTitle": "warn",
+        "useButtonType": "warn"
+      }
+    }
+  },
   "overrides": [
     {
       "includes": ["**/*.astro"],

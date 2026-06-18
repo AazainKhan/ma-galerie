@@ -5,14 +5,22 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 import "@fancyapps/ui/dist/fancybox/fancybox.css";
 
 // Fetch all images from all albums from D1
-const db = Astro.locals.runtime.env.DB;
-const { results: imagesData } = await db
-  .prepare(`
-    SELECT i.* FROM images i
-    LEFT JOIN albums a ON i.album_id = a.id
-    ORDER BY i.created_at DESC
-  `)
-  .all();
+const db = Astro.locals.runtime?.env?.DB;
+let imagesData: any[] = [];
+if (db) {
+  try {
+    const result = await db
+      .prepare(`
+        SELECT i.* FROM images i
+        LEFT JOIN albums a ON i.album_id = a.id
+        ORDER BY i.created_at DESC
+      `)
+      .all();
+    imagesData = result.results ?? [];
+  } catch {
+    imagesData = [];
+  }
+}
 
 type ImageData = {
   id: number;
@@ -33,7 +41,6 @@ const images: ImageData[] = (imagesData || []).map((img: any) => ({
   album_id: img.album_id,
 }));
 
-// Pre-load critical images (first 6)
 const criticalImages = images.slice(0, 6);
 const lazyImages = images.slice(6);
 ---
@@ -44,132 +51,60 @@ const lazyImages = images.slice(6);
 >
   <Hero />
   
-  <section class="justified-gallery" id="photoswipe">
-    <!-- Critical images loaded eagerly -->
-    {
-      criticalImages.map((image, index) => {
-        return (
-          <a
-            class="gallery-item loaded"
-            style={`--width: ${image.width}; --height: ${image.height};`}
-            href={image.src}
-            target="_blank"
-            data-fancybox="gallery"
-            data-index={index}
-          >
-            <div class="skeleton-loader"></div>
-            <Image
-              format="webp"
-              src={image.src}
-              width={image.width}
-              height={image.height}
-              alt={image.alt || "Gallery image"}
-              loading="eager"
-              decoding="sync"
-              fetchpriority="high"
-            />
-          </a>
-        );
-      })
-    }
-    
-    <!-- Lazy loaded images with skeleton loaders -->
-    {
-      lazyImages.map((image, index) => {
-        return (
-          <a
-            class="gallery-item"
-            style={`--width: ${image.width}; --height: ${image.height};`}
-            href={image.src}
-            target="_blank"
-            data-fancybox="gallery"
-            data-index={index + 6}
-            data-lazy="true"
-          >
-            <div class="skeleton-loader active"></div>
-            <Image
-              format="webp"
-              src={image.src}
-              width={image.width}
-              height={image.height}
-              alt={image.alt || "Gallery image"}
-              loading="lazy"
-              decoding="async"
-            />
-          </a>
-        );
-      })
-    }
-  </section>
+  {images.length > 0 && (
+    <section class="justified-gallery" id="photoswipe">
+      {criticalImages.map((image, index) => (
+        <a
+          class="gallery-item"
+          style={`--width: ${image.width}; --height: ${image.height};`}
+          href={image.src}
+          target="_blank"
+          data-fancybox="gallery"
+          data-index={index}
+        >
+          <Image
+            format="webp"
+            src={image.src}
+            width={image.width}
+            height={image.height}
+            alt={image.alt || "Gallery image"}
+            loading="eager"
+            decoding="sync"
+            fetchpriority="high"
+          />
+        </a>
+      ))}
+      {lazyImages.map((image, index) => (
+        <a
+          class="gallery-item"
+          style={`--width: ${image.width}; --height: ${image.height};`}
+          href={image.src}
+          target="_blank"
+          data-fancybox="gallery"
+          data-index={index + 6}
+        >
+          <Image
+            format="webp"
+            src={image.src}
+            width={image.width}
+            height={image.height}
+            alt={image.alt || "Gallery image"}
+            loading="lazy"
+            decoding="async"
+          />
+        </a>
+      ))}
+    </section>
+  )}
 </BaseLayout>
 
 <script>
   import { Fancybox } from "@fancyapps/ui/dist/fancybox/";
 
-  // Initialize Fancybox after DOM is ready
-  function initFancybox() {
-    Fancybox.bind("[data-fancybox]");
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFancybox);
+    document.addEventListener('DOMContentLoaded', () => Fancybox.bind("[data-fancybox]"));
   } else {
-    initFancybox();
-  }
-
-  // Handle skeleton loaders and image loading
-  function handleImageLoad(link: Element) {
-    const skeleton = link.querySelector('.skeleton-loader');
-    if (skeleton) {
-      skeleton.classList.remove('active');
-    }
-    link.classList.add('loaded');
-  }
-
-  // Setup image load handlers
-  document.querySelectorAll('.gallery-item img').forEach((img) => {
-    const link = img.closest('.gallery-item');
-    if (!link) return;
-
-    const imgEl = img as HTMLImageElement;
-    
-    // For eager loaded images
-    if (imgEl.getAttribute('loading') === 'eager') {
-      if (imgEl.complete) {
-        handleImageLoad(link);
-      } else {
-        imgEl.addEventListener('load', () => handleImageLoad(link), { once: true });
-      }
-    } else {
-      // For lazy loaded images
-      imgEl.addEventListener('load', () => handleImageLoad(link), { once: true });
-    }
-  });
-
-  // Enhanced Intersection Observer for lazy loading
-  if ('IntersectionObserver' in window) {
-    const lazyImageObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const link = entry.target as HTMLElement;
-          const img = link.querySelector('img');
-          
-          if (img && link.dataset.lazy === 'true') {
-            // Trigger native lazy loading
-            link.removeAttribute('data-lazy');
-            lazyImageObserver.unobserve(link);
-          }
-        }
-      });
-    }, {
-      rootMargin: '100px 0px',
-      threshold: 0.01
-    });
-
-    // Observe lazy images
-    document.querySelectorAll('[data-lazy="true"]').forEach((link) => {
-      lazyImageObserver.observe(link);
-    });
+    Fancybox.bind("[data-fancybox]");
   }
 </script>
 
@@ -204,12 +139,6 @@ const lazyImages = images.slice(6);
     object-fit: cover;
     height: 100%;
     width: 100%;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-  }
-
-  .gallery-item.loaded img {
-    opacity: 1;
   }
 
   .gallery-item:focus-visible {
@@ -219,49 +148,6 @@ const lazyImages = images.slice(6);
     z-index: 1;
     border-radius: 2px;
     box-shadow: 0 2px 4px 2px rgb(0 0 0 / 10%);
-  }
-
-  /* Skeleton Loader */
-  .skeleton-loader {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      #f0f0f0 0%,
-      #e8e8e8 20%,
-      #f0f0f0 40%,
-      #f0f0f0 100%
-    );
-    background-size: 200% 100%;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    pointer-events: none;
-  }
-
-  .skeleton-loader.active {
-    opacity: 1;
-    animation: shimmer 1.5s infinite;
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: 200% 0;
-    }
-    100% {
-      background-position: -200% 0;
-    }
-  }
-
-  .gallery-item.loaded .skeleton-loader {
-    opacity: 0;
-  }
-
-  .gallery-item.hidden {
-    transition: opacity 0.4s ease-in-out;
-    opacity: 0;
   }
 
   /* 4K scaling */
@@ -280,16 +166,5 @@ const lazyImages = images.slice(6);
     }
   }
 
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .skeleton-loader {
-      background: linear-gradient(
-        90deg,
-        #2a2a2a 0%,
-        #333333 20%,
-        #2a2a2a 40%,
-        #2a2a2a 100%
-      );
-    }
-  }
+
 </style>

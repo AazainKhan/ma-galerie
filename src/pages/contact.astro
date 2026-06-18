@@ -3,12 +3,6 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Contact" description="Get in touch with me on social media.">
-	<!-- Contact header for mobile -->
-	<div class="mobile-header">
-		<h1 style="font-size: clamp(32px, 8vw, 62px); opacity: .8; font-family: PPEditorialNew-Ultralight, sans-serif; font-display: swap; text-align: center; padding: 2rem 0; margin-top: 2rem;">Ma Galerie</h1>
-	</div>
-
-	<!-- Contact content for desktop -->
 	<main class="contact-container">
 		<div class="contact-content">
 			<h1 class="contact-title">Get in Touch</h1>
@@ -168,7 +162,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 		}
 		
 		.contact-title {
-			display: none; /* Hide desktop title on mobile since we have mobile header */
+			display: block;
 		}
 		
 		.contact-description {
@@ -181,10 +175,4 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 		}
 	}
 
-	/* Hide mobile header on desktop */
-	@media (width >= 640px) {
-		.mobile-header {
-			display: none;
-		}
-	}
 </style>

@@ -54,8 +54,8 @@ const gearItems = [
 						<div class="gear-item">
 							<div class="gear-placeholder">
 								<span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">{item.icon}</span>
-								<span style="font-weight: 600; color: #333;">{item.name}</span>
-								<span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.25rem;">{item.category}</span>
+								<span class="gear-name">{item.name}</span>
+								<span class="gear-category">{item.category}</span>
 							</div>
 						</div>
 					))}
@@ -195,15 +195,16 @@ const gearItems = [
 	.gear-placeholder {
 		width: 100%;
 		height: 100%;
-		background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
+		background: color-mix(in oklab, var(--text) 5%, transparent);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		font-size: 18px;
 		font-weight: 500;
-		color: #666;
-		border: 1px solid #eee;
+		color: var(--text);
+		border: 1px solid color-mix(in oklab, var(--text) 12%, transparent);
+		border-radius: 8px;
 	}
 
 	/* Contact Section Styles */
@@ -269,8 +270,19 @@ const gearItems = [
 		}
 	}
 
-	.gear-placeholder span {
-		opacity: 0.7;
+	.gear-name {
+		font-weight: 600;
+		color: var(--text);
+		opacity: 0.85;
+	}
+
+	.gear-category {
+		font-size: 0.8rem;
+		text-transform: uppercase;
+		letter-spacing: 1px;
+		margin-top: 0.25rem;
+		color: var(--text);
+		opacity: 0.55;
 	}
 
 	/* Large screens - maintain size */

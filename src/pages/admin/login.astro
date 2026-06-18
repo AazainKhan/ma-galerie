@@ -4,7 +4,17 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Admin Login" description="Login to manage your gallery">
-  <div class="min-h-[80vh] flex items-center justify-center bg-gray-50 px-4">
+  <div class="login-page">
     <LoginForm client:load />
   </div>
 </BaseLayout>
+
+<style>
+  .login-page {
+    min-height: 80dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+</style>

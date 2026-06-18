@@ -8,13 +8,13 @@ const title = (slug ?? "album")
   .replace(/-/g, " ")
   .replace(/\b\w/g, (c) => c.toUpperCase());
 
-const db = Astro.locals.runtime.env.DB;
+const db = Astro.locals.runtime?.env?.DB;
 
 // 1. Get Album ID
-const { results: albums } = await db
-  .prepare("SELECT * FROM albums WHERE slug = ?")
-  .bind(slug)
-  .all();
+const albums = db
+  ? ((await db.prepare("SELECT * FROM albums WHERE slug = ?").bind(slug).all())
+      .results ?? [])
+  : [];
 
 // Convert album to plain object
 const albumData = albums[0]
@@ -29,16 +29,17 @@ const albumData = albums[0]
   : null;
 
 // Convert D1 results to plain objects to avoid serialization issues
-const imagesData = albumData
-  ? (
-      await db
-        .prepare(
-          "SELECT * FROM images WHERE album_id = ? ORDER BY created_at DESC",
-        )
-        .bind(albumData.id)
-        .all()
-    ).results
-  : [];
+const imagesData =
+  albumData && db
+    ? ((
+        await db
+          .prepare(
+            "SELECT * FROM images WHERE album_id = ? ORDER BY created_at DESC",
+          )
+          .bind(albumData.id)
+          .all()
+      ).results ?? [])
+    : [];
 
 const images = imagesData.map((img: any) => ({
   id: img.id,

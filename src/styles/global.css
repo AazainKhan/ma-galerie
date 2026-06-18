@@ -37,8 +37,13 @@
   --button-shadow: #fff;
 
   /* Dock colors */
-  --dock-bg: rgba(243, 244, 246, 0.85);
-  --dock-border: rgba(209, 213, 219, 0.8);
+  --dock-bg: rgba(28, 32, 46, 0.52);
+  --dock-border: rgba(255, 255, 255, 0.1);
+
+  /* Desktop icon label + selection ring (overridden per theme/palette) */
+  --icon-label-color: #fff;
+  --icon-label-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  --icon-select-ring: rgba(60, 60, 68, 0.65);
 }
 
 :root[data-theme="light"] {
@@ -54,8 +59,13 @@
   --button-shadow: #fff;
 
   /* Dock colors - light */
-  --dock-bg: rgba(243, 244, 246, 0.85);
-  --dock-border: rgba(209, 213, 219, 0.8);
+  --dock-bg: rgba(255, 255, 255, 0.52);
+  --dock-border: rgba(200, 205, 215, 0.55);
+
+  /* Desktop icon label + selection ring - light mode */
+  --icon-label-color: #1c1c1e;
+  --icon-label-shadow: none;
+  --icon-select-ring: rgba(0, 0, 0, 0.13);
 }
 
 :root[data-theme="dark"] {
@@ -71,8 +81,8 @@
   --button-shadow: #000;
 
   /* Dock colors - dark */
-  --dock-bg: rgba(55, 65, 81, 0.9);
-  --dock-border: rgba(75, 85, 99, 1);
+  --dock-bg: rgba(28, 32, 46, 0.52);
+  --dock-border: rgba(255, 255, 255, 0.1);
 }
 
 /* Dock surface styling lives in CSS to avoid React hydration mismatches */
@@ -81,8 +91,12 @@
   border-width: 1px;
   border-style: solid;
   border-color: var(--dock-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 body {
@@ -115,6 +129,11 @@ a:hover {
   background: var(--header-bg);
   border-bottom: 1px solid
     color-mix(in oklab, var(--grid-line) 60%, transparent);
+}
+
+/* When mobile menu is open, raise header above all app windows (which start at z-index 201) */
+.site-header.menu-open {
+  z-index: 10000;
 }
 
 .nav {
@@ -192,12 +211,13 @@ a:hover {
     padding-bottom: 1rem;
   }
 
-  /* Make hamburger and theme toggle buttons larger on mobile */
+  /* All nav icon buttons are 44×44 circles on mobile */
   .menu-toggle,
-  .theme-toggle {
+  .theme-toggle,
+  .palette-btn {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: 999px;
   }
 
   .menu-toggle svg,
@@ -233,7 +253,7 @@ a:hover {
   width: 36px;
   height: 36px;
   border-radius: 999px;
-  border: 1px solid var(--grid-line);
+  border: 1px solid color-mix(in oklab, var(--text) 22%, transparent);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -245,7 +265,8 @@ a:hover {
 
 .theme-toggle:hover {
   transform: scale(1.02) rotate(10deg);
-  background-color: color-mix(in oklab, var(--grid-line) 40%, transparent);
+  background-color: color-mix(in oklab, var(--text) 10%, transparent);
+  border-color: color-mix(in oklab, var(--text) 38%, transparent);
 }
 
 .theme-toggle .icon-sun {
@@ -271,7 +292,7 @@ a:hover {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 999px;
   border: 1px solid var(--grid-line);
   background: transparent;
   color: inherit;
@@ -287,35 +308,33 @@ a:hover {
 
 /* Mobile menu panel */
 .mobile-menu {
-  /* Anchor directly below the sticky header */
   position: absolute;
   left: 0;
   right: 0;
   top: 100%;
 
-  /* Match navbar background/blur for seamless look */
-  background: var(--header-bg);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(12px); /* Safari support */
+  background: var(--bg-app);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid
+    color-mix(in oklab, var(--grid-line) 60%, transparent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   padding: 16px;
   display: grid;
   grid-template-rows: 1fr auto;
-  gap: 16px;
+  gap: 12px;
   transform: translateY(-8px);
   opacity: 0;
   pointer-events: none;
   transition:
     opacity 0.2s ease,
-    transform 0.2s ease,
-    backdrop-filter 0.3s ease;
+    transform 0.2s ease;
 }
 
 .mobile-menu.open {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 .mobile-menu .links {
@@ -325,9 +344,32 @@ a:hover {
   padding: 0;
 }
 
+/* Mobile-only: palette + theme live in the hamburger drawer, not the top nav */
+@media (width <= 639px) {
+  .nav > .palette-wrapper,
+  .nav > .theme-toggle {
+    display: none;
+  }
+}
+
+/* Row of controls at the bottom of the hamburger drawer */
 .mobile-actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Mobile palette panel opens upward so it doesn't clip out of the menu */
+.palette-wrapper-mobile .palette-panel {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.palette-wrapper-mobile .palette-panel::before {
+  top: auto;
+  bottom: -8px;
 }
 
 /* Prevent body scroll when menu is open */
@@ -348,9 +390,10 @@ a:hover {
 /* 3x3 Grid Dock Styles */
 .grid-dock {
   position: fixed;
-  top: 50%;
+  bottom: 32px;
+  top: auto;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   z-index: 50;
   border-radius: 18px;
   background:
@@ -401,28 +444,6 @@ a:hover {
   .mobile-header {
     /* Use small viewport height to account for iOS dynamic bars */
     padding-top: clamp(2rem, 7svh, 6rem);
-  }
-}
-
-/* Mobile layout adjustments */
-@media (width <= 640px) {
-  .grid-dock {
-    /* Use small viewport height on iOS to account for dynamic bars */
-    top: calc(50svh + 5%);
-  }
-}
-
-/* On tall phones (e.g., 390x844), push the grid a bit lower to add breathing room under the header */
-@media (width <= 639px) and (height >= 780px) {
-  .grid-dock {
-    top: calc(50svh + 14%);
-  }
-}
-
-/* On small, shorter phones (e.g., 375x667), also push the grid down slightly */
-@media (width <= 375px) and (height <= 700px) {
-  .grid-dock {
-    top: calc(50svh + 10%);
   }
 }
 
@@ -577,6 +598,886 @@ a:hover {
   .social-link {
     padding: 12px 50px;
   }
+}
+
+/* ===== Color Palettes =====
+   Each palette overrides the full color scheme regardless of light/dark toggle.
+   data-palette is set on <html> alongside data-theme.
+*/
+
+/* Shared glass surface vars — overridden per palette/theme */
+:root {
+  --glass-bg: rgba(28, 28, 32, 0.52);
+  --glass-border: rgba(255, 255, 255, 0.13);
+  --glass-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.42), 0 2px 8px rgba(0, 0, 0, 0.22);
+  --glass-titlebar: rgba(255, 255, 255, 0.05);
+  --glass-titlebar-border: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="light"] {
+  --glass-bg: rgba(255, 255, 255, 0.68);
+  --glass-border: rgba(0, 0, 0, 0.09);
+  --glass-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.13), 0 2px 8px rgba(0, 0, 0, 0.07);
+  --glass-titlebar: rgba(0, 0, 0, 0.04);
+  --glass-titlebar-border: rgba(0, 0, 0, 0.07);
+}
+
+/* 2 — Regal Navy / Lemon Chiffon */
+:root[data-palette="regal-navy"] {
+  color-scheme: dark;
+  --bg: #0d3b66;
+  --bg-dark: #0d3b66;
+  --bg-app: #0d3b66;
+  --text: #faf0ca;
+  --grid-line: rgba(250, 240, 202, 0.08);
+  --header-bg: rgba(13, 59, 102, 0.78);
+  --link: #faf0ca;
+  --button-bg: #faf0ca;
+  --button-text: #0d3b66;
+  --button-shadow: rgba(250, 240, 202, 0.5);
+  --dock-bg: rgba(13, 59, 102, 0.72);
+  --dock-border: rgba(250, 240, 202, 0.18);
+  --glass-bg: rgba(13, 45, 82, 0.58);
+  --glass-border: rgba(250, 240, 202, 0.16);
+  --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --glass-titlebar: rgba(250, 240, 202, 0.05);
+  --glass-titlebar-border: rgba(250, 240, 202, 0.1);
+}
+
+/* 3 — Indigo / Tropical Mint */
+:root[data-palette="indigo"] {
+  color-scheme: dark;
+  --bg: #42047e;
+  --bg-dark: #42047e;
+  --bg-app: #42047e;
+  --text: #07f49e;
+  --grid-line: rgba(7, 244, 158, 0.09);
+  --header-bg: rgba(66, 4, 126, 0.78);
+  --link: #07f49e;
+  --button-bg: #07f49e;
+  --button-text: #42047e;
+  --button-shadow: rgba(7, 244, 158, 0.45);
+  --dock-bg: rgba(55, 3, 105, 0.72);
+  --dock-border: rgba(7, 244, 158, 0.18);
+  --glass-bg: rgba(50, 3, 96, 0.58);
+  --glass-border: rgba(7, 244, 158, 0.2);
+  --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --glass-titlebar: rgba(7, 244, 158, 0.05);
+  --glass-titlebar-border: rgba(7, 244, 158, 0.1);
+}
+
+/* 4 — Charcoal Blue / Verdigris */
+:root[data-palette="charcoal-blue"] {
+  color-scheme: dark;
+  --bg: #264653;
+  --bg-dark: #264653;
+  --bg-app: #264653;
+  --text: #e8f4f3;
+  --grid-line: rgba(42, 157, 143, 0.14);
+  --header-bg: rgba(38, 70, 83, 0.78);
+  --link: #2a9d8f;
+  --button-bg: #2a9d8f;
+  --button-text: #264653;
+  --button-shadow: rgba(42, 157, 143, 0.45);
+  --dock-bg: rgba(38, 70, 83, 0.78);
+  --dock-border: rgba(42, 157, 143, 0.28);
+  --glass-bg: rgba(30, 58, 68, 0.6);
+  --glass-border: rgba(42, 157, 143, 0.22);
+  --glass-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --glass-titlebar: rgba(42, 157, 143, 0.06);
+  --glass-titlebar-border: rgba(42, 157, 143, 0.12);
+}
+
+/* 5 — Honeydew / Celadon */
+:root[data-palette="honeydew"] {
+  color-scheme: light;
+  --bg: #ebf5df;
+  --bg-dark: #d8edca;
+  --bg-app: #ebf5df;
+  --text: #2d3b27;
+  --grid-line: rgba(45, 59, 39, 0.08);
+  --header-bg: rgba(235, 245, 223, 0.82);
+  --link: #3d6e37;
+  --button-bg: #3d6e37;
+  --button-text: #ebf5df;
+  --button-shadow: rgba(61, 110, 55, 0.35);
+  --dock-bg: rgba(186, 212, 170, 0.62);
+  --dock-border: rgba(45, 59, 39, 0.14);
+  --glass-bg: rgba(235, 245, 223, 0.72);
+  --glass-border: rgba(45, 59, 39, 0.1);
+  --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --glass-titlebar: rgba(45, 59, 39, 0.04);
+  --glass-titlebar-border: rgba(45, 59, 39, 0.08);
+}
+
+/* 6 — Powder Blue / Regal Navy */
+:root[data-palette="powder-blue"] {
+  color-scheme: dark;
+  --bg: #103783;
+  --bg-dark: #103783;
+  --bg-app: #103783;
+  --text: #c4d4ee;
+  --grid-line: rgba(155, 175, 217, 0.1);
+  --header-bg: rgba(16, 55, 131, 0.78);
+  --link: #c4d4ee;
+  --button-bg: #9bafd9;
+  --button-text: #103783;
+  --button-shadow: rgba(155, 175, 217, 0.4);
+  --dock-bg: rgba(16, 55, 131, 0.78);
+  --dock-border: rgba(155, 175, 217, 0.22);
+  --glass-bg: rgba(12, 44, 105, 0.6);
+  --glass-border: rgba(155, 175, 217, 0.2);
+  --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.28);
+  --glass-titlebar: rgba(155, 175, 217, 0.05);
+  --glass-titlebar-border: rgba(155, 175, 217, 0.1);
+}
+
+/* 7 — Bright Amber / Jungle Teal */
+:root[data-palette="bright-amber"] {
+  color-scheme: light;
+  --bg: #f8c828;
+  --bg-dark: #e8b810;
+  --bg-app: #f8c828;
+  --text: #004d3b;
+  --grid-line: rgba(0, 77, 59, 0.11);
+  --header-bg: rgba(248, 200, 40, 0.82);
+  --link: #007e5d;
+  --button-bg: #007e5d;
+  --button-text: #f8c828;
+  --button-shadow: rgba(0, 126, 93, 0.4);
+  --dock-bg: rgba(248, 200, 40, 0.62);
+  --dock-border: rgba(0, 77, 59, 0.18);
+  --glass-bg: rgba(255, 215, 60, 0.62);
+  --glass-border: rgba(0, 77, 59, 0.14);
+  --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.07);
+  --glass-titlebar: rgba(0, 77, 59, 0.05);
+  --glass-titlebar-border: rgba(0, 77, 59, 0.09);
+}
+
+/* ===== Palette Light/Dark Variants =====
+   Each palette responds to data-theme so the toggle works within any palette.
+   Dark palettes get a [data-theme="light"] inverse; light palettes get a [data-theme="dark"] inverse.
+*/
+
+/* Regal Navy — light variant (cream bg, navy text) */
+:root[data-palette="regal-navy"][data-theme="light"] {
+  color-scheme: light;
+  --bg: #faf0ca;
+  --bg-dark: #f0e4b0;
+  --bg-app: #faf0ca;
+  --text: #0d3b66;
+  --grid-line: rgba(13, 59, 102, 0.08);
+  --header-bg: rgba(250, 240, 202, 0.88);
+  --link: #0d3b66;
+  --button-bg: #0d3b66;
+  --button-text: #faf0ca;
+  --button-shadow: rgba(13, 59, 102, 0.3);
+  --dock-bg: rgba(250, 240, 202, 0.72);
+  --dock-border: rgba(13, 59, 102, 0.18);
+  --glass-bg: rgba(250, 240, 202, 0.72);
+  --glass-border: rgba(13, 59, 102, 0.12);
+  --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --glass-titlebar: rgba(13, 59, 102, 0.04);
+  --glass-titlebar-border: rgba(13, 59, 102, 0.09);
+  --icon-label-color: #0d3b66;
+  --icon-label-shadow: none;
+  --icon-select-ring: rgba(0, 0, 0, 0.13);
+}
+
+/* Indigo Mint — light variant (lavender bg, indigo text) */
+:root[data-palette="indigo"][data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5eeff;
+  --bg-dark: #e8d8ff;
+  --bg-app: #f5eeff;
+  --text: #42047e;
+  --grid-line: rgba(66, 4, 126, 0.07);
+  --header-bg: rgba(245, 238, 255, 0.88);
+  --link: #42047e;
+  --button-bg: #42047e;
+  --button-text: #f5eeff;
+  --button-shadow: rgba(66, 4, 126, 0.25);
+  --dock-bg: rgba(245, 238, 255, 0.72);
+  --dock-border: rgba(66, 4, 126, 0.15);
+  --glass-bg: rgba(245, 238, 255, 0.72);
+  --glass-border: rgba(66, 4, 126, 0.11);
+  --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --glass-titlebar: rgba(66, 4, 126, 0.04);
+  --glass-titlebar-border: rgba(66, 4, 126, 0.09);
+  --icon-label-color: #42047e;
+  --icon-label-shadow: none;
+  --icon-select-ring: rgba(0, 0, 0, 0.13);
+}
+
+/* Charcoal Teal — light variant (pale teal bg, charcoal text) */
+:root[data-palette="charcoal-blue"][data-theme="light"] {
+  color-scheme: light;
+  --bg: #e8f4f3;
+  --bg-dark: #d2eae8;
+  --bg-app: #e8f4f3;
+  --text: #264653;
+  --grid-line: rgba(38, 70, 83, 0.08);
+  --header-bg: rgba(232, 244, 243, 0.88);
+  --link: #264653;
+  --button-bg: #2a9d8f;
+  --button-text: #fff;
+  --button-shadow: rgba(42, 157, 143, 0.3);
+  --dock-bg: rgba(232, 244, 243, 0.72);
+  --dock-border: rgba(38, 70, 83, 0.14);
+  --glass-bg: rgba(232, 244, 243, 0.72);
+  --glass-border: rgba(38, 70, 83, 0.1);
+  --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --glass-titlebar: rgba(38, 70, 83, 0.04);
+  --glass-titlebar-border: rgba(38, 70, 83, 0.09);
+  --icon-label-color: #264653;
+  --icon-label-shadow: none;
+  --icon-select-ring: rgba(0, 0, 0, 0.13);
+}
+
+/* Honeydew — dark variant (forest green bg, muted green text) */
+:root[data-palette="honeydew"][data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a2e16;
+  --bg-dark: #1a2e16;
+  --bg-app: #1a2e16;
+  --text: #bad4aa;
+  --grid-line: rgba(186, 212, 170, 0.09);
+  --header-bg: rgba(26, 46, 22, 0.82);
+  --link: #bad4aa;
+  --button-bg: #bad4aa;
+  --button-text: #1a2e16;
+  --button-shadow: rgba(186, 212, 170, 0.3);
+  --dock-bg: rgba(26, 46, 22, 0.8);
+  --dock-border: rgba(186, 212, 170, 0.2);
+  --glass-bg: rgba(22, 40, 18, 0.62);
+  --glass-border: rgba(186, 212, 170, 0.14);
+  --glass-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.42), 0 2px 8px rgba(0, 0, 0, 0.22);
+  --glass-titlebar: rgba(186, 212, 170, 0.05);
+  --glass-titlebar-border: rgba(186, 212, 170, 0.1);
+  --icon-label-color: #fff;
+  --icon-label-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  --icon-select-ring: rgba(255, 255, 255, 0.14);
+}
+
+/* Powder Blue — light variant (pale blue bg, deep navy text) */
+:root[data-palette="powder-blue"][data-theme="light"] {
+  color-scheme: light;
+  --bg: #dce8f8;
+  --bg-dark: #c8d8f0;
+  --bg-app: #dce8f8;
+  --text: #103783;
+  --grid-line: rgba(16, 55, 131, 0.07);
+  --header-bg: rgba(220, 232, 248, 0.88);
+  --link: #103783;
+  --button-bg: #103783;
+  --button-text: #dce8f8;
+  --button-shadow: rgba(16, 55, 131, 0.25);
+  --dock-bg: rgba(220, 232, 248, 0.72);
+  --dock-border: rgba(16, 55, 131, 0.15);
+  --glass-bg: rgba(220, 232, 248, 0.72);
+  --glass-border: rgba(16, 55, 131, 0.1);
+  --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --glass-titlebar: rgba(16, 55, 131, 0.04);
+  --glass-titlebar-border: rgba(16, 55, 131, 0.09);
+  --icon-label-color: #103783;
+  --icon-label-shadow: none;
+  --icon-select-ring: rgba(0, 0, 0, 0.13);
+}
+
+/* Amber Teal — dark variant (deep jungle green bg, amber text) */
+:root[data-palette="bright-amber"][data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #003d30;
+  --bg-dark: #003d30;
+  --bg-app: #003d30;
+  --text: #f8c828;
+  --grid-line: rgba(248, 200, 40, 0.1);
+  --header-bg: rgba(0, 61, 48, 0.82);
+  --link: #f8c828;
+  --button-bg: #f8c828;
+  --button-text: #003d30;
+  --button-shadow: rgba(248, 200, 40, 0.3);
+  --dock-bg: rgba(0, 61, 48, 0.8);
+  --dock-border: rgba(248, 200, 40, 0.2);
+  --glass-bg: rgba(0, 50, 38, 0.62);
+  --glass-border: rgba(248, 200, 40, 0.14);
+  --glass-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --glass-titlebar: rgba(248, 200, 40, 0.05);
+  --glass-titlebar-border: rgba(248, 200, 40, 0.1);
+  --icon-label-color: #fff;
+  --icon-label-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  --icon-select-ring: rgba(255, 255, 255, 0.14);
+}
+
+/* ===== Palette Picker =====  */
+.palette-wrapper {
+  position: relative;
+}
+
+.palette-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--text) 22%, transparent);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.25s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.palette-btn:hover,
+.palette-wrapper.open .palette-btn {
+  transform: scale(1.02);
+  background-color: color-mix(in oklab, var(--text) 10%, transparent);
+  border-color: color-mix(in oklab, var(--text) 38%, transparent);
+}
+
+@media (width <= 639px) {
+  .palette-btn,
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+  .palette-btn {
+    border-radius: 999px;
+  }
+  /* Palette panel anchors to right edge on mobile */
+  .palette-panel {
+    right: -4px;
+    min-width: 192px;
+  }
+}
+
+.palette-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 200;
+  min-width: 176px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--header-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid color-mix(in oklab, var(--grid-line) 80%, transparent);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.22),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  /* hidden state */
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* Bridge the gap so hover doesn't flicker */
+.palette-panel::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
+.palette-wrapper:hover .palette-panel,
+.palette-wrapper:focus-within .palette-panel,
+.palette-wrapper.open .palette-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.palette-swatch {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.palette-swatch:hover {
+  background: color-mix(in oklab, var(--text) 9%, transparent);
+}
+
+.palette-swatch.active {
+  background: color-mix(in oklab, var(--text) 12%, transparent);
+}
+
+.palette-swatch.active::after {
+  content: "✓";
+  position: absolute;
+  right: 9px;
+  font-size: 11px;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.swatch-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.swatch-top,
+.swatch-bot {
+  flex: 1;
+  display: block;
+}
+
+.swatch-label {
+  font-size: 12px;
+  color: var(--text);
+  opacity: 0.85;
+  white-space: nowrap;
+  font-family: var(--font);
+}
+
+/* ===== Desktop Icons (Mac Desktop) ===== */
+.desktop-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: default;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  padding: 5px;
+  border-radius: 10px;
+  transition: background 0.1s ease;
+}
+
+/* Selection: filled rounded-rect wrapping the icon only, not extending to label */
+.desktop-icon.selected {
+  background: transparent;
+}
+
+.desktop-icon-img-wrap {
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.desktop-icon.selected .desktop-icon-img-wrap {
+  background: var(--icon-select-ring);
+}
+
+.desktop-icon-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.desktop-icon-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Plain label — uses theme/palette CSS vars for color */
+.desktop-icon-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--icon-label-color);
+  text-align: center;
+  text-shadow: var(--icon-label-shadow);
+  border-radius: 4px;
+  padding: 1px 6px;
+  max-width: 90px;
+  overflow: hidden;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Selected: blue label pill (always white text regardless of theme) */
+.desktop-icon.selected .desktop-icon-label {
+  background: #0a84ff;
+  color: #fff;
+  text-shadow: none;
+}
+
+/* Apple rainbow spinning beach ball — shown at cursor on folder open */
+@keyframes beach-ball-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.beach-ball {
+  position: fixed;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #ff3b30 0deg 30deg,
+    #ff9500 30deg 60deg,
+    #ffcc00 60deg 90deg,
+    #34c759 90deg 120deg,
+    #30d158 120deg 150deg,
+    #32ade6 150deg 180deg,
+    #007aff 180deg 210deg,
+    #5856d6 210deg 240deg,
+    #af52de 240deg 270deg,
+    #ff2d55 270deg 300deg,
+    #ff6b6b 300deg 330deg,
+    #ff3b30 330deg 360deg
+  );
+  animation: beach-ball-spin 0.75s linear infinite;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  z-index: 99999;
+  pointer-events: none;
+}
+
+/* ===== Context Menu ===== */
+.ctx-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 200px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  padding: 5px;
+  user-select: none;
+}
+
+.ctx-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text);
+  border-radius: 6px;
+  cursor: default;
+  background: none;
+  border: none;
+  font-family: var(--font);
+  transition:
+    background 0.08s ease,
+    color 0.08s ease;
+}
+
+.ctx-menu-item:hover:not(.disabled) {
+  background: #0a84ff;
+  color: #fff;
+}
+
+.ctx-menu-item.destructive:hover:not(.disabled) {
+  background: #ff3b30;
+  color: #fff;
+}
+
+.ctx-menu-item.disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ctx-menu-separator {
+  height: 1px;
+  background: var(--glass-border);
+  margin: 3px 6px;
+}
+
+/* ===== Info Window ===== */
+.info-window {
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.info-window-body {
+  padding: 12px 16px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.info-row {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row-label {
+  font-weight: 500;
+  opacity: 0.6;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.info-row-value {
+  font-weight: 400;
+  word-break: break-word;
+}
+
+/* Dock open-app dot indicator */
+.dock-dot {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.78);
+  pointer-events: none;
+}
+
+/* ===== Album Window (glassmorphic) ===== */
+.album-window {
+  width: min(420px, calc(100vw - 80px));
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  pointer-events: auto;
+}
+
+.window-titlebar {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--glass-titlebar);
+  border-bottom: 1px solid var(--glass-titlebar-border);
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.window-titlebar:active {
+  cursor: grabbing;
+}
+
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tl {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition:
+    filter 0.15s ease,
+    transform 0.1s ease;
+}
+
+.tl:hover {
+  filter: brightness(1.15);
+  transform: scale(1.1);
+}
+
+.tl-red {
+  background: #ff5f57;
+}
+.tl-yellow {
+  background: #febc2e;
+}
+.tl-green {
+  background: #28c840;
+}
+
+.titlebar-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 0 70px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text);
+  opacity: 0.78;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.window-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.window-cover-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--text) 6%, transparent);
+}
+
+.window-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.window-desc {
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0.68;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.window-open-btn {
+  align-self: flex-start;
+  background: color-mix(in oklab, var(--text) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--text) 18%, transparent);
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font);
+  padding: 6px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.window-open-btn:hover {
+  background: color-mix(in oklab, var(--text) 18%, transparent);
+}
+
+/* ===== Mock App Windows ===== */
+.mock-window {
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  isolation: isolate;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+.window-spotify {
+  background: #121212;
+}
+
+.mock-window-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.mock-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-titlebar);
+  flex-shrink: 0;
+}
+
+.mock-browser-url {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text);
+  opacity: 0.55;
+  text-align: center;
+  font-family: ui-monospace, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mock-browser-open {
+  font-size: 14px;
+  color: var(--text);
+  opacity: 0.45;
+  text-decoration: none;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.mock-browser-open:hover {
+  opacity: 0.85;
+}
+
+.textedit-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-bottom: 1px solid #ddd;
+  background: #f4f4f4;
+  flex-shrink: 0;
+  min-height: 30px;
 }
 
 /* ===== Admin Panel Styles ===== */

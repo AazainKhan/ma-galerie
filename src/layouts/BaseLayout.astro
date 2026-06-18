@@ -21,13 +21,54 @@ const themeCookie = Astro.cookies.get("theme")?.value;
 const initialTheme =
   themeCookie === "dark" || themeCookie === "light" ? themeCookie : undefined;
 
+const paletteCookie = Astro.cookies.get("palette")?.value;
+const VALID_PALETTES = [
+  "regal-navy",
+  "indigo",
+  "charcoal-blue",
+  "honeydew",
+  "powder-blue",
+  "bright-amber",
+];
+const initialPalette = VALID_PALETTES.includes(paletteCookie ?? "")
+  ? paletteCookie
+  : undefined;
+
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`;
 ---
 
-<html lang="en" data-theme={initialTheme} class={initialTheme === "dark" ? "dark" : undefined} style={initialTheme ? `color-scheme: ${initialTheme}` : undefined}>
+<html lang="en" data-theme={initialTheme} data-palette={initialPalette} class={initialTheme === "dark" ? "dark" : undefined} style={initialTheme ? `color-scheme: ${initialTheme}` : undefined}>
   <head>
     <meta charset="utf-8" />
+    <!-- MUST be first: apply theme+palette before any CSS renders to eliminate flash -->
+    <script is:inline>
+      (function () {
+        try {
+          var r = document.documentElement;
+          // ── Theme ──────────────────────────────────────────────────────
+          var theme = localStorage.getItem('theme');
+          if (!theme) theme = (document.cookie.match(/(?:^|;\s*)theme=([^;]+)/) || [])[1] || null;
+          if (!theme) theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          r.dataset.theme = theme;
+          r.style.colorScheme = theme;
+          r.classList.toggle('dark', theme === 'dark');
+          document.cookie = 'theme=' + theme + '; path=/; max-age=31536000; samesite=lax';
+
+          // ── Palette ────────────────────────────────────────────────────
+          var palette = localStorage.getItem('palette');
+          if (!palette) palette = (document.cookie.match(/(?:^|;\s*)palette=([^;]+)/) || [])[1] || null;
+          if (palette && palette !== 'default') {
+            r.dataset.palette = palette;
+            document.cookie = 'palette=' + palette + '; path=/; max-age=31536000; samesite=lax';
+          } else if (!palette) {
+            // No stored preference — keep whatever SSR rendered
+          } else {
+            delete r.dataset.palette;
+          }
+        } catch (_) {}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalURL} />
@@ -53,42 +94,7 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
         </>
       )
     }
-    {/* Set initial theme before paint to avoid flash */}
-    <script is:inline>
-      (function() {
-        try {
-          var root = document.documentElement;
-          var theme = localStorage.getItem('theme');
-          var cookieTheme = document.cookie.match(/theme=([^;]+)/)?.[1];
-          
-          // Priority: LocalStorage > Cookie > System
-          // But if Cookie exists and differs from LocalStorage, we should probably trust LocalStorage (user action) 
-          // and update Cookie, OR trust Cookie (server state).
-          // Let's trust LocalStorage as the source of truth for the client.
-          
-          if (!theme && cookieTheme) {
-            theme = cookieTheme;
-          }
-          
-          if (!theme) {
-            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          }
-          
-          // Apply theme
-          root.dataset.theme = theme;
-          root.style.colorScheme = theme;
-          root.classList.toggle('dark', theme === 'dark');
-          
-          // Sync cookie if needed
-          if (cookieTheme !== theme) {
-            document.cookie = "theme=" + theme + "; path=/; max-age=31536000; samesite=lax";
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      })();
-    </script>
-  </head>
+    </head>
   <body>
     <header class="site-header">
       <nav class="nav">
@@ -108,6 +114,48 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
             <path d="M4 18h16" />
           </svg>
         </button>
+        <!-- Palette picker -->
+        <div class="palette-wrapper">
+          <button class="palette-btn" type="button" aria-label="Choose color palette" title="Choose color palette">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <rect x="1"   y="1"   width="6" height="6" rx="1.5" opacity="1"/>
+              <rect x="9"   y="1"   width="6" height="6" rx="1.5" opacity="0.65"/>
+              <rect x="1"   y="9"   width="6" height="6" rx="1.5" opacity="0.45"/>
+              <rect x="9"   y="9"   width="6" height="6" rx="1.5" opacity="0.82"/>
+            </svg>
+          </button>
+          <div class="palette-panel" role="listbox" aria-label="Color themes">
+            <button class="palette-swatch" data-p="default" role="option">
+              <span class="swatch-circle"><span class="swatch-top" style="background:#151515"></span><span class="swatch-bot" style="background:#ffffff"></span></span>
+              <span class="swatch-label">Default</span>
+            </button>
+            <button class="palette-swatch" data-p="regal-navy" role="option">
+              <span class="swatch-circle"><span class="swatch-top" style="background:#0d3b66"></span><span class="swatch-bot" style="background:#faf0ca"></span></span>
+              <span class="swatch-label">Regal Navy</span>
+            </button>
+            <button class="palette-swatch" data-p="indigo" role="option">
+              <span class="swatch-circle"><span class="swatch-top" style="background:#42047e"></span><span class="swatch-bot" style="background:#07f49e"></span></span>
+              <span class="swatch-label">Indigo Mint</span>
+            </button>
+            <button class="palette-swatch" data-p="charcoal-blue" role="option">
+              <span class="swatch-circle"><span class="swatch-top" style="background:#264653"></span><span class="swatch-bot" style="background:#2a9d8f"></span></span>
+              <span class="swatch-label">Charcoal Teal</span>
+            </button>
+            <button class="palette-swatch" data-p="honeydew" role="option">
+              <span class="swatch-circle"><span class="swatch-top" style="background:#ebf5df"></span><span class="swatch-bot" style="background:#bad4aa"></span></span>
+              <span class="swatch-label">Honeydew</span>
+            </button>
+            <button class="palette-swatch" data-p="powder-blue" role="option">
+              <span class="swatch-circle"><span class="swatch-top" style="background:#103783"></span><span class="swatch-bot" style="background:#9bafd9"></span></span>
+              <span class="swatch-label">Powder Blue</span>
+            </button>
+            <button class="palette-swatch" data-p="bright-amber" role="option">
+              <span class="swatch-circle"><span class="swatch-top" style="background:#f8c828"></span><span class="swatch-bot" style="background:#007e5d"></span></span>
+              <span class="swatch-label">Amber Teal</span>
+            </button>
+          </div>
+        </div>
+
         <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
           <span class="sr-only">Toggle theme</span>
           <svg
@@ -159,13 +207,67 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
           <li><a href="/about">About</a></li>
           <li><a href="/contact">Contact</a></li>
         </ul>
+        <div class="mobile-actions">
+          <!-- Mobile palette picker -->
+          <div class="palette-wrapper palette-wrapper-mobile">
+            <button class="palette-btn" type="button" aria-label="Choose color palette" title="Choose color palette">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <rect x="1"   y="1"   width="6" height="6" rx="1.5" opacity="1"/>
+                <rect x="9"   y="1"   width="6" height="6" rx="1.5" opacity="0.65"/>
+                <rect x="1"   y="9"   width="6" height="6" rx="1.5" opacity="0.45"/>
+                <rect x="9"   y="9"   width="6" height="6" rx="1.5" opacity="0.82"/>
+              </svg>
+            </button>
+            <div class="palette-panel" role="listbox" aria-label="Color themes">
+              <button class="palette-swatch" data-p="default" role="option">
+                <span class="swatch-circle"><span class="swatch-top" style="background:#151515"></span><span class="swatch-bot" style="background:#ffffff"></span></span>
+                <span class="swatch-label">Default</span>
+              </button>
+              <button class="palette-swatch" data-p="regal-navy" role="option">
+                <span class="swatch-circle"><span class="swatch-top" style="background:#0d3b66"></span><span class="swatch-bot" style="background:#faf0ca"></span></span>
+                <span class="swatch-label">Regal Navy</span>
+              </button>
+              <button class="palette-swatch" data-p="indigo" role="option">
+                <span class="swatch-circle"><span class="swatch-top" style="background:#42047e"></span><span class="swatch-bot" style="background:#07f49e"></span></span>
+                <span class="swatch-label">Indigo Mint</span>
+              </button>
+              <button class="palette-swatch" data-p="charcoal-blue" role="option">
+                <span class="swatch-circle"><span class="swatch-top" style="background:#264653"></span><span class="swatch-bot" style="background:#2a9d8f"></span></span>
+                <span class="swatch-label">Charcoal Teal</span>
+              </button>
+              <button class="palette-swatch" data-p="honeydew" role="option">
+                <span class="swatch-circle"><span class="swatch-top" style="background:#ebf5df"></span><span class="swatch-bot" style="background:#bad4aa"></span></span>
+                <span class="swatch-label">Honeydew</span>
+              </button>
+              <button class="palette-swatch" data-p="powder-blue" role="option">
+                <span class="swatch-circle"><span class="swatch-top" style="background:#103783"></span><span class="swatch-bot" style="background:#9bafd9"></span></span>
+                <span class="swatch-label">Powder Blue</span>
+              </button>
+              <button class="palette-swatch" data-p="bright-amber" role="option">
+                <span class="swatch-circle"><span class="swatch-top" style="background:#f8c828"></span><span class="swatch-bot" style="background:#007e5d"></span></span>
+                <span class="swatch-label">Amber Teal</span>
+              </button>
+            </div>
+          </div>
+          <!-- Mobile theme toggle -->
+          <button id="theme-toggle-mobile" class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+            <span class="sr-only">Toggle theme</span>
+            <svg class="icon-sun" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+            </svg>
+            <svg class="icon-moon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+          </button>
+        </div>
       </div>
     </header>
 
     <slot />
 
     <script>
-      const STORAGE_KEY = "theme";
+      // ── Theme ────────────────────────────────────────────────────────
       const desktopThemeBtn = document.getElementById("theme-toggle");
       const mobileThemeBtn = document.getElementById("theme-toggle-mobile");
       const themeButtons = [desktopThemeBtn, mobileThemeBtn].filter(Boolean);
@@ -174,29 +276,84 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
         document.documentElement.classList.toggle("dark", theme === "dark");
-        try {
-          localStorage.setItem(STORAGE_KEY, theme);
-        } catch (_) {}
-        // Also persist to cookie so server can SSR the correct theme on next navigation/reload
-        try {
-          document.cookie = `theme=${theme}; path=/; max-age=31536000; samesite=lax`;
-        } catch (_) {}
+        try { localStorage.setItem("theme", theme); } catch (_) {}
+        try { document.cookie = `theme=${theme}; path=/; max-age=31536000; samesite=lax`; } catch (_) {}
       }
 
       function toggleTheme() {
-        const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-        const next = current === "dark" ? "light" : "dark";
+        const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
         setTheme(next);
-        themeButtons.forEach((b: Element | null) => {
-          if (b) (b as HTMLElement).setAttribute("aria-label", next === "dark" ? "Switch to light mode" : "Switch to dark mode");
+      }
+
+      themeButtons.forEach((b: Element | null) => b?.addEventListener("click", toggleTheme));
+
+      // ── Palette ──────────────────────────────────────────────────────
+      function markActiveSwatch(name: string) {
+        document.querySelectorAll(".palette-swatch[data-p]").forEach((btn) => {
+          (btn as HTMLElement).classList.toggle("active", btn.getAttribute("data-p") === name);
         });
       }
 
-      themeButtons.forEach((b: Element | null) => {
-        b?.addEventListener("click", toggleTheme);
+      function applyPalette(name: string) {
+        if (!name || name === "default") {
+          delete document.documentElement.dataset.palette;
+        } else {
+          document.documentElement.dataset.palette = name;
+        }
+        try { localStorage.setItem("palette", name); } catch (_) {}
+        try { document.cookie = `palette=${name}; path=/; max-age=31536000; samesite=lax`; } catch (_) {}
+        markActiveSwatch(name);
+        closePalettePanel();
+      }
+
+      // Sync active swatch on every load / bfcache restore
+      function syncSwatchState() {
+        // Re-read from localStorage so state is correct even after bfcache navigation
+        const stored = (() => { try { return localStorage.getItem("palette"); } catch (_) { return null; } })();
+        const current = stored || document.documentElement.dataset.palette || "default";
+        if (current && current !== "default") document.documentElement.dataset.palette = current;
+        else if (current === "default") delete document.documentElement.dataset.palette;
+        markActiveSwatch(current || "default");
+      }
+      syncSwatchState();
+
+      // bfcache: re-sync when navigating back/forward
+      window.addEventListener("pageshow", (e) => {
+        if (e.persisted) syncSwatchState();
       });
 
-      // Mobile menu
+      document.querySelectorAll(".palette-swatch[data-p]").forEach((btn) => {
+        btn.addEventListener("click", () => applyPalette(btn.getAttribute("data-p") ?? "default"));
+      });
+
+      // ── Palette panel: click-to-open (handles desktop + mobile copies) ──
+      const paletteWrappers = document.querySelectorAll(".palette-wrapper") as NodeListOf<HTMLElement>;
+
+      function closePalettePanel() {
+        paletteWrappers.forEach(w => w.classList.remove("open"));
+      }
+
+      paletteWrappers.forEach(wrapper => {
+        const btn = wrapper.querySelector(".palette-btn") as HTMLElement | null;
+        btn?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = wrapper.classList.contains("open");
+          closePalettePanel();
+          if (!isOpen) wrapper.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", (e) => {
+        let inside = false;
+        paletteWrappers.forEach(w => { if (w.contains(e.target as Node)) inside = true; });
+        if (!inside) closePalettePanel();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closePalettePanel();
+      });
+
+      // ── Mobile menu ──────────────────────────────────────────────────
       const menuBtn = document.getElementById("menu-toggle");
       const mobileMenu = document.getElementById("mobile-menu");
 
@@ -206,31 +363,24 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
         mobileMenu.classList.toggle("open", open);
         if (open) mobileMenu.removeAttribute("hidden"); else mobileMenu.setAttribute("hidden", "");
         document.documentElement.classList.toggle("no-scroll", open);
+        document.querySelector(".site-header")?.classList.toggle("menu-open", open);
       }
 
       menuBtn?.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent document click from firing
-        const isOpen = menuBtn.getAttribute("aria-expanded") === "true";
-        openMenu(!isOpen);
+        e.stopPropagation();
+        openMenu(menuBtn.getAttribute("aria-expanded") !== "true");
       });
 
       document.addEventListener("click", (e) => {
         if (!mobileMenu?.classList.contains("open")) return;
         const target = e.target as HTMLElement;
-        if (
-          !mobileMenu.contains(target) &&
-          target !== menuBtn
-        ) {
-          openMenu(false);
-        }
+        if (!mobileMenu.contains(target) && target !== menuBtn) openMenu(false);
       });
 
-      mobileMenu?.querySelectorAll("a").forEach((a) =>
-        a.addEventListener("click", () => openMenu(false))
-      );
+      mobileMenu?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => openMenu(false)));
 
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") openMenu(false);
+        if (e.key === "Escape") { openMenu(false); closePalettePanel(); }
       });
     </script>
   </body>
