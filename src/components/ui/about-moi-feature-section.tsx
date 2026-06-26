@@ -117,7 +117,7 @@ function Row({ f, i }: { f: Feature; i: number }) {
         className={reversed ? "md:order-2" : ""}
       >
         <h3
-          className="mt-2 text-4xl leading-tight font-light sm:text-5xl md:text-6xl"
+          className="mt-2 text-2xl leading-tight font-light sm:text-3xl md:text-4xl"
           style={{ fontFamily: "PPEditorialNew, serif" }}
         >
           {f.title}
