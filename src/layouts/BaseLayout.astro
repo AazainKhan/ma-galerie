@@ -77,6 +77,9 @@ const showGridGlow = !albumsDesktopPath;
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Colours the iOS Safari address-bar / safe-area region to match the theme
+         (refined per-palette by JS once styles load). -->
+    <meta name="theme-color" content={initialTheme === "dark" ? "#151515" : "#ffffff"} />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalURL} />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>" />
@@ -280,12 +283,28 @@ const showGridGlow = !albumsDesktopPath;
       const mobileThemeBtn = document.getElementById("theme-toggle-mobile");
       const themeButtons = [desktopThemeBtn, mobileThemeBtn].filter(Boolean);
 
+      // Keep the iOS Safari status-bar colour in sync with the actual rendered
+      // page background (resolves the theme + palette to a concrete colour).
+      function syncThemeColor() {
+        try {
+          const c = getComputedStyle(document.body).backgroundColor;
+          let meta = document.querySelector('meta[name="theme-color"]');
+          if (!meta) {
+            meta = document.createElement("meta");
+            meta.setAttribute("name", "theme-color");
+            document.head.appendChild(meta);
+          }
+          if (c) meta.setAttribute("content", c);
+        } catch (_) {}
+      }
+
       function setTheme(theme: "light" | "dark") {
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
         document.documentElement.classList.toggle("dark", theme === "dark");
         try { localStorage.setItem("theme", theme); } catch (_) {}
         try { document.cookie = `theme=${theme}; path=/; max-age=31536000; samesite=lax`; } catch (_) {}
+        syncThemeColor();
       }
 
       function toggleTheme() {
@@ -312,6 +331,7 @@ const showGridGlow = !albumsDesktopPath;
         try { document.cookie = `palette=${name}; path=/; max-age=31536000; samesite=lax`; } catch (_) {}
         markActiveSwatch(name);
         closePalettePanel();
+        syncThemeColor();
       }
 
       // Sync active swatch on every load / bfcache restore
@@ -324,10 +344,14 @@ const showGridGlow = !albumsDesktopPath;
         markActiveSwatch(current || "default");
       }
       syncSwatchState();
+      syncThemeColor();
 
       // bfcache: re-sync when navigating back/forward
       window.addEventListener("pageshow", (e) => {
-        if (e.persisted) syncSwatchState();
+        if (e.persisted) {
+          syncSwatchState();
+          syncThemeColor();
+        }
       });
 
       document.querySelectorAll(".palette-swatch[data-p]").forEach((btn) => {

@@ -113,6 +113,10 @@
    shift left/right between pages that do vs. don't have a scrollbar. */
 html {
   scrollbar-gutter: stable;
+  /* Match the theme so iOS Safari's safe-area / overscroll region (around the
+     Dynamic Island, above the sticky nav) blends with the page instead of
+     showing a white bar. */
+  background-color: var(--bg-app);
 }
 
 body {
@@ -134,6 +138,9 @@ body {
   width: min(92vw, 820px);
   height: clamp(5.5rem, 15vw, 9rem);
   color: var(--text);
+  /* Isolate the morphing title so its blur/filter repaints don't invalidate
+     the rest of the page each frame. */
+  contain: layout paint;
 }
 
 .gooey-hero-text {
@@ -142,6 +149,8 @@ body {
   line-height: 1;
   white-space: nowrap;
   font-size: clamp(2.5rem, 8vw, 5.5rem) !important;
+  /* Hint the compositor that opacity + filter animate (smoother morph). */
+  will-change: opacity, filter;
 }
 
 /* ===== Subtle cursor highlight of the page's grid lines (theme-aware) ===== */
@@ -1998,6 +2007,20 @@ html.mg-no-select * {
     width: clamp(230px, 74vw, 360px);
     max-width: none;
     opacity: 0.8;
+    /* Fade out the topmost flowers of each bouquet so the tall poppies never
+       reach up over the title/subtitle — clears the text without moving it. */
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 11%,
+      #000 30%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 11%,
+      #000 30%
+    );
   }
 
   .hero-flower-left {

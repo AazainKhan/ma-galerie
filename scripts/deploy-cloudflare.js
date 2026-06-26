@@ -22,7 +22,10 @@ try {
 
   // Copy raw images for direct serving
   const publicImagesPath = join("public", "images");
-  if (existsSync(publicImagesPath) && readdirSync(publicImagesPath).length > 0) {
+  if (
+    existsSync(publicImagesPath) &&
+    readdirSync(publicImagesPath).length > 0
+  ) {
     execSync("mkdir -p dist/images && cp -R public/images/* dist/images/", {
       stdio: "inherit",
     });

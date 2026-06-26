@@ -27,11 +27,17 @@ export function GooeyText({
     let morph = 0;
     let cooldown = cooldownTime;
     let frame = 0;
+    // True while the word is just resting (not morphing). Lets us skip the
+    // per-frame style writes during the long cooldown so the expensive SVG
+    // threshold filter only re-renders while the text is actually morphing —
+    // the main perf win on Safari/Chrome.
+    let resting = false;
 
     // Cap the blur radius: the original effect let it spike toward 100px, which
     // is what made the thin serif tear apart / glitch on mobile GPUs. A lower
-    // ceiling keeps the gooey "melt + merge" while staying smooth.
-    const MAX_BLUR = 22;
+    // ceiling keeps the gooey "melt + merge" while staying smooth (and lighter
+    // for the filter to compute each frame).
+    const MAX_BLUR = 18;
 
     const setMorph = (fraction: number) => {
       if (text1Ref.current && text2Ref.current) {
@@ -46,6 +52,9 @@ export function GooeyText({
 
     const doCooldown = () => {
       morph = 0;
+      // Already resting — the styles are settled, don't rewrite them every frame.
+      if (resting) return;
+      resting = true;
       if (text1Ref.current && text2Ref.current) {
         text2Ref.current.style.filter = "";
         text2Ref.current.style.opacity = "100%";
@@ -55,6 +64,7 @@ export function GooeyText({
     };
 
     const doMorph = () => {
+      resting = false;
       morph -= cooldown;
       cooldown = 0;
       let fraction = morph / morphTime;
