@@ -116,9 +116,16 @@ export function GooeyText({
 
   return (
     <div className={cn("relative", className)}>
-      <svg className="absolute h-0 w-0" aria-hidden="true" focusable="false">
+      <svg
+        className="absolute h-0 w-0"
+        aria-hidden="true"
+        focusable="false"
+      >
         <defs>
-          <filter id="threshold">
+          {/* color-interpolation-filters=sRGB keeps the alpha threshold
+              consistent on Safari (its linearRGB default can drop the gooey
+              merge or render the text invisible). */}
+          <filter id="threshold" colorInterpolationFilters="sRGB">
             <feColorMatrix
               in="SourceGraphic"
               type="matrix"
@@ -133,7 +140,10 @@ export function GooeyText({
 
       <div
         className="flex items-center justify-center"
-        style={{ filter: "url(#threshold)" }}
+        style={{
+          filter: "url(#threshold)",
+          WebkitFilter: "url(#threshold)",
+        }}
       >
         <span
           ref={text1Ref}

@@ -139,9 +139,6 @@ body {
   width: min(92vw, 820px);
   height: clamp(5.5rem, 15vw, 9rem);
   color: var(--text);
-  /* Isolate the morphing title so its blur/filter repaints don't invalidate
-     the rest of the page each frame. */
-  contain: layout paint;
 }
 
 .gooey-hero-text {
@@ -150,8 +147,6 @@ body {
   line-height: 1;
   white-space: nowrap;
   font-size: clamp(2.5rem, 8vw, 5.5rem) !important;
-  /* Hint the compositor that opacity + filter animate (smoother morph). */
-  will-change: opacity, filter;
 }
 
 /* ===== Subtle cursor highlight of the page's grid lines (theme-aware) ===== */
