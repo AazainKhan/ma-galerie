@@ -113,19 +113,20 @@
    shift left/right between pages that do vs. don't have a scrollbar. */
 html {
   scrollbar-gutter: stable;
-  /* Match the theme so iOS Safari's safe-area / overscroll region (around the
-     Dynamic Island, above the sticky nav) blends with the page instead of
-     showing a white bar. */
-  background-color: var(--bg-app);
-}
-
-body {
+  /* The page background + grid live on <html> (the root) so they always paint
+     the full viewport canvas — including the iOS Safari safe-area (no white bar)
+     AND pages whose <body> is short because its content is position:fixed (e.g.
+     /albums' Mac desktop) or shorter than the screen (e.g. /contact). <body>
+     stays transparent so this grid shows through on every page. */
   background-color: var(--bg-app);
   background-image:
     linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
   background-size: 24px 24px;
   background-attachment: fixed;
+}
+
+body {
   color: var(--text);
   font-family: var(--font);
 }
