@@ -158,7 +158,11 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 	/* Mobile-specific styles */
 	@media (width <= 639px) {
 		.contact-container {
-			padding-top: 1rem;
+			/* Top-align the content and drop it the same distance below the nav as
+			   the About page's first heading (its mobile header padding + margin),
+			   so the "Get in Touch" title lines up consistently. */
+			align-items: start;
+			padding-top: calc(clamp(2rem, 7svh, 6rem) + 2rem);
 		}
 		
 		.contact-title {

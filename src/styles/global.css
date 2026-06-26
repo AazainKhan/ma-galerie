@@ -564,11 +564,12 @@ a:hover {
   display: none;
 }
 
-/* Boost mobile header font size on small screens */
+/* Keep the mobile page heading the same size/serif as the other section
+   titles (Ma Vision, Ma Gear, Get in Touch) for consistency. */
 @media (width <= 639px) {
   .mobile-header h1 {
-    /* Override inline sizes for better readability on small screens */
-    font-size: clamp(40px, 10vw, 72px) !important;
+    font-size: clamp(32px, 8vw, 56px) !important;
+    font-family: PPEditorialNew, serif !important;
   }
 }
 
