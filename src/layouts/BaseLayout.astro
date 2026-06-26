@@ -285,16 +285,20 @@ const showGridGlow = !albumsDesktopPath;
 
       // Keep the iOS Safari status-bar colour in sync with the actual rendered
       // page background (resolves the theme + palette to a concrete colour).
+      // Read <html> — the page background lives there now and <body> is
+      // transparent, so reading body would give a transparent (white) bar.
       function syncThemeColor() {
         try {
-          const c = getComputedStyle(document.body).backgroundColor;
+          const c = getComputedStyle(document.documentElement).backgroundColor;
           let meta = document.querySelector('meta[name="theme-color"]');
           if (!meta) {
             meta = document.createElement("meta");
             meta.setAttribute("name", "theme-color");
             document.head.appendChild(meta);
           }
-          if (c) meta.setAttribute("content", c);
+          if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") {
+            meta.setAttribute("content", c);
+          }
         } catch (_) {}
       }
 
