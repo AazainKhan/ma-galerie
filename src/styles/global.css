@@ -99,6 +99,12 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
+/* Reserve the scrollbar gutter so centered content (the navbar) doesn't
+   shift left/right between pages that do vs. don't have a scrollbar. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--bg-app);
   background-image:
@@ -108,6 +114,113 @@ body {
   background-attachment: fixed;
   color: var(--text);
   font-family: var(--font);
+}
+
+/* Gooey morphing hero title (home page) — styles reach the React island */
+.gooey-hero-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(92vw, 820px);
+  height: clamp(5.5rem, 15vw, 9rem);
+  color: var(--text);
+}
+
+.gooey-hero-text {
+  font-family: PPEditorialNew, serif;
+  font-weight: 200;
+  line-height: 1;
+  white-space: nowrap;
+  font-size: clamp(2.5rem, 8vw, 5.5rem) !important;
+}
+
+/* ===== Subtle cursor highlight of the page's grid lines (theme-aware) ===== */
+.grid-glow {
+  --mx: 50vw;
+  --my: 50vh;
+  position: fixed;
+  inset: 0;
+  /* behind all page content (above only the base body grid) */
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* the same 24px grid as the body, just a touch stronger, softly revealed around
+   the cursor so the existing lines gently "light up" — colour follows the theme */
+.grid-glow__lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--text) 22%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--text) 22%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 24px 24px;
+  /* match the body grid (also fixed) so the highlighted lines align exactly */
+  background-attachment: fixed;
+  -webkit-mask-image: radial-gradient(
+    circle 300px at var(--mx) var(--my),
+    #000 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    transparent 80%
+  );
+  mask-image: radial-gradient(
+    circle 300px at var(--mx) var(--my),
+    #000 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    transparent 80%
+  );
+}
+
+/* barely-there ambient glow in the theme's accent colour */
+.grid-glow__spot {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle 360px at var(--mx) var(--my),
+    color-mix(in oklab, var(--link) 6%, transparent),
+    transparent 72%
+  );
+}
+
+/* Inline link-preview hover card (About page "Ma Vision" — life/emotion/beauty) */
+.lp-trigger {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.lp-card {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  z-index: 50;
+  pointer-events: none;
+  transform-origin: bottom center;
+  transform: translateX(calc(-50% + var(--lp-dx, 0px))) translateY(14px)
+    scale(0.7);
+  opacity: 0;
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1.1),
+    opacity 0.18s ease;
+}
+
+.lp-trigger:hover .lp-card,
+.lp-trigger:focus-visible .lp-card {
+  transform: translateX(calc(-50% + var(--lp-dx, 0px))) translateY(0) scale(1);
+  opacity: 1;
 }
 
 /* Links */
@@ -125,15 +238,25 @@ a:hover {
   position: sticky;
   top: 0;
   z-index: 50;
-  backdrop-filter: blur(8px);
-  background: var(--header-bg);
-  border-bottom: 1px solid
-    color-mix(in oklab, var(--grid-line) 60%, transparent);
+  /* Opaque: the theme tint composited over the solid page background so
+     content cleanly stops at the nav's bottom edge instead of showing
+     through underneath it while scrolling. */
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--header-bg), var(--header-bg));
+  border-bottom: 1px solid color-mix(in oklab, var(--text) 12%, transparent);
+  transition: all 0.3s ease;
 }
 
 /* When mobile menu is open, raise header above all app windows (which start at z-index 201) */
 .site-header.menu-open {
   z-index: 10000;
+}
+
+.theme-toggle svg,
+.palette-btn svg {
+  transition:
+    width 0.3s ease,
+    height 0.3s ease;
 }
 
 .nav {
@@ -143,6 +266,7 @@ a:hover {
   max-width: 1200px;
   margin: 0 auto;
   padding: 28px clamp(16px, 4vw, 32px);
+  transition: padding 0.3s ease;
 }
 
 .nav .brand a {
@@ -152,6 +276,7 @@ a:hover {
   font-weight: 200;
   letter-spacing: 0.2px;
   font-size: clamp(1.75rem, 1vw + 1rem, 2.5rem);
+  transition: font-size 0.3s ease;
 }
 
 .nav .spacer {
@@ -183,6 +308,9 @@ a:hover {
   padding: 8px 12px;
   font-size: clamp(1.05rem, 0.5vw + 0.95rem, 1.25rem);
   line-height: 1.2;
+  transition:
+    font-size 0.3s ease,
+    padding 0.3s ease;
 }
 
 .mobile-menu .links a {
@@ -260,7 +388,9 @@ a:hover {
   transition:
     transform 0.25s ease,
     border-color 0.2s ease,
-    background-color 0.2s ease;
+    background-color 0.2s ease,
+    width 0.3s ease,
+    height 0.3s ease;
 }
 
 .theme-toggle:hover {
@@ -933,7 +1063,9 @@ a:hover {
   transition:
     transform 0.25s ease,
     border-color 0.2s ease,
-    background-color 0.2s ease;
+    background-color 0.2s ease,
+    width 0.3s ease,
+    height 0.3s ease;
   flex-shrink: 0;
 }
 
@@ -968,13 +1100,14 @@ a:hover {
   min-width: 176px;
   padding: 6px;
   border-radius: 14px;
-  background: var(--header-bg);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid color-mix(in oklab, var(--grid-line) 80%, transparent);
+  /* Frosted glass — matches the app windows */
+  background: var(--glass-bg);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid var(--glass-border);
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.22),
-    0 2px 8px rgba(0, 0, 0, 0.12);
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1064,11 +1197,28 @@ a:hover {
 }
 
 /* ===== Desktop Icons (Mac Desktop) ===== */
+/* Click-and-drag marquee selection (macOS rubber-band look) */
+.marquee {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  background: rgba(225, 232, 245, 0.16);
+  border: 1px solid rgba(235, 240, 250, 0.75);
+  border-radius: 1px;
+}
+
+/* While marquee-dragging, suppress text selection across the page */
+html.mg-no-select,
+html.mg-no-select * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
 .desktop-icon {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 2px;
   cursor: default;
   pointer-events: auto;
   user-select: none;
@@ -1108,8 +1258,8 @@ a:hover {
 
 /* Plain label — uses theme/palette CSS vars for color */
 .desktop-icon-label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--icon-label-color);
   text-align: center;
   text-shadow: var(--icon-label-shadow);
@@ -1128,38 +1278,6 @@ a:hover {
   background: #0a84ff;
   color: #fff;
   text-shadow: none;
-}
-
-/* Apple rainbow spinning beach ball — shown at cursor on folder open */
-@keyframes beach-ball-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.beach-ball {
-  position: fixed;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: conic-gradient(
-    #ff3b30 0deg 30deg,
-    #ff9500 30deg 60deg,
-    #ffcc00 60deg 90deg,
-    #34c759 90deg 120deg,
-    #30d158 120deg 150deg,
-    #32ade6 150deg 180deg,
-    #007aff 180deg 210deg,
-    #5856d6 210deg 240deg,
-    #af52de 240deg 270deg,
-    #ff2d55 270deg 300deg,
-    #ff6b6b 300deg 330deg,
-    #ff3b30 330deg 360deg
-  );
-  animation: beach-ball-spin 0.75s linear infinite;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  z-index: 99999;
-  pointer-events: none;
 }
 
 /* ===== Context Menu ===== */
@@ -1226,7 +1344,7 @@ a:hover {
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow:
     var(--glass-shadow),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -1291,14 +1409,22 @@ a:hover {
 }
 
 .window-titlebar {
-  height: 32px;
+  height: 34px;
   display: flex;
   align-items: center;
   position: relative;
   gap: 8px;
   padding: 0 12px;
-  background: var(--glass-titlebar);
+  /* Frosted liquid-glass titlebar: mostly-opaque app-tinted bar + heavy blur */
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--bg-app) 82%, transparent),
+    color-mix(in oklab, var(--bg-app) 74%, transparent)
+  );
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
   border-bottom: 1px solid var(--glass-titlebar-border);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 22%, transparent);
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
@@ -1414,7 +1540,8 @@ a:hover {
   background: var(--glass-bg);
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid var(--glass-border);
+  /* Always a soft white edge (never a dark outline on light themes) */
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow:
     var(--glass-shadow),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -1427,6 +1554,139 @@ a:hover {
   background: #121212;
 }
 
+/* ===== Desktop sticky note (session only) ===== */
+.sticky-note {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #fff7a0 0%, #ffe55c 100%);
+  border-radius: 2px;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+  color: #3a3320;
+  overflow: hidden;
+}
+
+.sticky-note-bar {
+  position: relative;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 0 8px;
+  background: rgba(0, 0, 0, 0.06);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.sticky-note-bar:active {
+  cursor: grabbing;
+}
+
+.sticky-note-dots {
+  border: none;
+  background: transparent;
+  color: #3a3320;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 3px;
+  border-radius: 4px;
+  opacity: 0.65;
+}
+
+.sticky-note-dots:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.sticky-note-menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 4px;
+  z-index: 5;
+  width: 150px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  cursor: default;
+}
+
+.sticky-note-menu-label {
+  font-family: -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #888;
+  padding: 0 2px 4px;
+}
+
+.sticky-note-swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.sticky-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sticky-swatch.active {
+  outline: 2px solid #0a84ff;
+  outline-offset: 1px;
+}
+
+.sticky-note-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  font-family: -apple-system, sans-serif;
+  font-size: 12px;
+  color: #222;
+  padding: 5px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sticky-note-menu-item:hover {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+.sticky-note-body {
+  flex: 1;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: #3a3320;
+  font-family: "Marker Felt", "Comic Sans MS", -apple-system, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+}
+
+.sticky-note-body::placeholder {
+  color: rgba(58, 51, 32, 0.45);
+}
+
+/* Spotify window is opaque dark — give its titlebar a frosted light bar
+   and keep the title legible regardless of theme. */
 .mock-window-content {
   flex: 1;
   overflow: hidden;
@@ -1440,8 +1700,15 @@ a:hover {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  border-bottom: 1px solid var(--glass-border);
-  background: var(--glass-titlebar);
+  /* Match the titlebar's frosted glass for a consistent look */
+  border-bottom: 1px solid var(--glass-titlebar-border);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--bg-app) 72%, transparent),
+    color-mix(in oklab, var(--bg-app) 64%, transparent)
+  );
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   flex-shrink: 0;
 }
 
@@ -1473,6 +1740,7 @@ a:hover {
 .textedit-toolbar {
   display: flex;
   align-items: center;
+  gap: 6px;
   padding: 5px 12px;
   border-bottom: 1px solid #ddd;
   background: #f4f4f4;
@@ -1655,4 +1923,101 @@ a:hover {
 
 .admin-icon-btn.success:hover {
   background-color: color-mix(in oklab, #22c55e 15%, transparent);
+}
+
+/* ===== Hero hand-drawn flowers — each bloom grows in, staggered ===== */
+.hero-flower {
+  position: absolute;
+  bottom: 0;
+  /* Size off the available side margin (big on wide screens, shrinks where the
+     centred text needs room) AND cap by viewport height so the bouquet fits
+     fully below the nav instead of being clipped at the top. */
+  width: clamp(150px, min(calc(78vw - 470px), 54vh), 700px);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+.hero-flower svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Each flower has a transparent hit rectangle so the hover target is a solid
+   area (not the thin ink lines) — stable, so the grow doesn't flicker. */
+.hero-flower .hit {
+  pointer-events: all;
+}
+
+.hero-flower .bloom {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.85s cubic-bezier(0.33, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.hero-flower .bloom:hover {
+  transform: scale(1.22);
+}
+
+/* Dense floral clusters anchored in the bottom corners, framing the
+   centred text and climbing the side edges. */
+.hero-flower-left {
+  left: clamp(-70px, -4vw, -24px);
+}
+
+.hero-flower-right {
+  right: clamp(-70px, -4vw, -24px);
+  transform: scaleX(-1);
+  transform-origin: center;
+}
+
+/* Black ink lines vanish on dark themes — flip them to light */
+[data-theme="dark"] .hero-flower {
+  filter: invert(1) brightness(1.4);
+}
+
+/* On phones a tall-narrow screen can't fit two big clusters with clear text,
+   so climb higher than before but keep them width-based and nudged off the
+   edge so the centred title stays readable. */
+@media (width <= 760px) {
+  .hero-flower {
+    width: clamp(180px, 62vw, 340px);
+    max-width: none;
+    opacity: 0.8;
+  }
+
+  .hero-flower-left {
+    left: clamp(-130px, -18vw, -48px);
+  }
+
+  .hero-flower-right {
+    right: clamp(-130px, -18vw, -48px);
+  }
+}
+
+.hero-flower .bud {
+  /* each bloom grows from its own base, staggered */
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  transform: scale(0);
+  opacity: 0;
+  animation: bud-grow 0.7s cubic-bezier(0.18, 0.7, 0.18, 1.1) both;
+  animation-delay: calc(var(--i) * 0.13s + 0.4s);
+}
+
+@keyframes bud-grow {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

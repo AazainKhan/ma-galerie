@@ -1,4 +1,6 @@
 ---
+import { AboutMoi } from "~/components/ui/about-moi-feature-section";
+import VisionStatement from "~/components/VisionStatement";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 
 const gearItems = [
@@ -7,6 +9,36 @@ const gearItems = [
   { name: "Sony 85mm f/1.8", category: "Lens", icon: "🔍" },
   { name: "Peak Design Tripod", category: "Accessory", icon: "📐" },
 ];
+
+// The "About Moi" feature images are managed in the admin panel via a dedicated
+// album (slug "about-moi", hidden from the public albums page). Ensure it exists,
+// then load its images in upload order to fill the feature slots.
+const db = Astro.locals.runtime?.env?.DB;
+let aboutMoiImages: { src: string; alt: string | null }[] = [];
+if (db) {
+  try {
+    await db
+      .prepare(
+        "INSERT OR IGNORE INTO albums (title, slug, description) VALUES ('About Moi', 'about-moi', 'Images for the About Moi section')",
+      )
+      .run();
+    const res = await db
+      .prepare(`
+        SELECT i.src, i.alt
+        FROM images i
+        JOIN albums a ON i.album_id = a.id
+        WHERE a.slug = 'about-moi'
+        ORDER BY i.id ASC
+      `)
+      .all();
+    aboutMoiImages = (res.results ?? []).map((r: any) => ({
+      src: r.src,
+      alt: r.alt,
+    }));
+  } catch {
+    aboutMoiImages = [];
+  }
+}
 ---
 
 <BaseLayout title="About" description="Learn more about Ma Galerie and my photography journey.">
@@ -32,13 +64,16 @@ const gearItems = [
 			</div>
 		</div>
 
+		<!-- About Moi + the "I am from" journey (moved from the home page) -->
+		<div class="about-extra">
+			<AboutMoi images={aboutMoiImages} client:visible />
+		</div>
+
 		<!-- Ma Vision Section -->
 		<section class="vision-section">
   <div class="vision-content">
     <h2 class="vision-title">Ma Vision</h2>
-    <p class="vision-description">
-      My vision is to capture the essence of life, emotion, and beauty in every frame. Through my lens, I strive to tell stories that resonate, inspire, and connect us to the world and each other.
-    </p>
+    <VisionStatement client:visible />
   </div>
 </section>
 
@@ -78,10 +113,37 @@ const gearItems = [
 
 <style>
 	.about-container {
+		/* breather between the section "screens" */
+		--section-gap: clamp(4rem, 8vh, 6rem);
 		min-height: clamp(360px, 70dvh, 520px);
 		padding: clamp(2rem, 5dvh, 5rem) clamp(16px, 4vw, 32px);
 		display: grid;
 		place-items: center;
+		row-gap: var(--section-gap);
+	}
+
+	/* Each short section gets close to a full screen with its content vertically
+	   centred, so only one section is really in view at a time and they don't
+	   clash together. (The tall feature sections already exceed this.) */
+	.about-content,
+	.vision-section,
+	.gear-section,
+	.contact-section {
+		min-height: clamp(460px, 78vh, 880px);
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	/* Lets the React feature sections span the full column width instead of
+	   being shrunk to content by the centred grid, and spaces the two of them
+	   with the same rhythm as the rest of the page. */
+	.about-extra {
+		width: 100%;
+		justify-self: stretch;
+		display: flex;
+		flex-direction: column;
+		gap: var(--section-gap);
 	}
 
 	.about-content {
@@ -117,7 +179,7 @@ const gearItems = [
 	.vision-section {
 		width: 100%;
 		max-width: 900px;
-		margin: 5rem auto 0 auto;
+		margin: 0 auto;
 		padding: 0 clamp(16px, 4vw, 32px);
 	}
 
@@ -147,7 +209,7 @@ const gearItems = [
 	.gear-section {
 		width: 100%;
 		max-width: 1200px;
-		margin-top: 5rem;
+		margin: 0 auto;
 		padding: 0 clamp(16px, 4vw, 32px);
 	}
 
@@ -211,7 +273,7 @@ const gearItems = [
 	.contact-section {
 		width: 100%;
 		max-width: 800px;
-		margin: 6rem auto 4rem auto;
+		margin: 0 auto;
 		padding: 0 clamp(16px, 4vw, 32px);
 		text-align: center;
 	}
@@ -365,14 +427,6 @@ const gearItems = [
 
 		.about-text p {
 			font-size: 20px; /* Larger text on mobile */
-		}
-
-		.vision-section {
-			margin-top: 3rem;
-		}
-
-		.gear-section {
-			margin-top: 3rem;
 		}
 
 		.gear-description {

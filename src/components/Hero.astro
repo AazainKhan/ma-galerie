@@ -1,31 +1,82 @@
 ---
+import { GooeyText } from "~/components/ui/gooey-text-morphing";
+import bloomSvg from "./corner-bouquet.svg?raw";
+
+// "My Gallery" across languages — French first (the brand), then English,
+// Arabic, Hindi, Urdu, and a few more.
+const titles = [
+  "Ma Galerie", // French
+  "My Gallery", // English
+  "معرضي", // Arabic
+  "मेरी गैलरी", // Hindi
+  "میری گیلری", // Urdu
+  "Mi Galería", // Spanish
+  "Minha Galeria", // Portuguese
+  "我的画廊", // Chinese
+  "私のギャラリー", // Japanese
+  "Meine Galerie", // German
+];
 ---
 
 <section class="hero">
+  <div class="hero-flower hero-flower-left" aria-hidden="true" set:html={bloomSvg} />
+  <div class="hero-flower hero-flower-right" aria-hidden="true" set:html={bloomSvg} />
+
   <div class="hero-content">
-    <h1 class="hero-title">Ma Galerie</h1>
+    <h1 class="sr-only">Ma Galerie</h1>
+    <div class="gooey-hero-wrap" aria-hidden="true">
+      <GooeyText
+        texts={titles}
+        morphTime={1}
+        cooldownTime={1.4}
+        textClassName="gooey-hero-text"
+        client:load
+      />
+    </div>
     <p class="hero-subtitle">A collection of moments, captured in time by me.</p>
   </div>
+
+  <button
+    class="scroll-cue"
+    type="button"
+    aria-label="Scroll down"
+    onclick="window.scrollBy({ top: window.innerHeight * 0.85, behavior: 'smooth' })"
+  >
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  </button>
 </section>
 
 <style>
   .hero {
+    position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 60vh;
+    min-height: 100vh;
+    height: 100vh;
+    width: 100%;
     text-align: center;
-    padding: 2rem;
+    padding: 4rem 2rem 1rem 2rem;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
-  .hero-title {
-    font-family: "PPEditorialNew", serif;
-    font-size: clamp(3rem, 10vw, 6rem);
-    font-weight: 200;
-    line-height: 1.1;
-    margin-bottom: 1rem;
-    opacity: 0;
-    animation: fade-in-up 0.8s ease-out forwards;
+  .hero-content {
+    position: relative;
+    z-index: 2;
   }
 
   .hero-subtitle {
@@ -34,13 +85,43 @@
     opacity: 0;
     animation: fade-in-up 0.8s ease-out 0.2s forwards;
     max-width: 600px;
-    margin: 0 auto;
+    margin: 1.25rem auto 0;
+  }
+
+  /* Tiny jumping arrow that prompts the user to scroll to the gallery */
+  .scroll-cue {
+    position: fixed;
+    bottom: 3rem;
+    left: 50%;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    opacity: 0;
+    animation:
+      cue-in 0.8s ease-out 0.8s forwards,
+      scroll-bounce 1.7s ease-in-out 1.6s infinite;
+    transform: translateX(-50%);
+    z-index: 10;
+    transition: opacity 0.4s ease-out;
+  }
+
+  .scroll-cue.hidden {
+    opacity: 0 !important;
+    animation: none;
+    pointer-events: none;
+  }
+
+  .scroll-cue:hover {
+    opacity: 0.95 !important;
   }
 
   @media (width <= 639px) {
     .hero {
-      min-height: 28dvh;
-      padding: 1.5rem 1rem;
+      min-height: 100dvh;
+      height: 100dvh;
+      padding: 1.5rem 1rem 5rem 1rem;
     }
   }
 
@@ -54,4 +135,37 @@
       transform: translateY(0);
     }
   }
+
+  @keyframes cue-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0.6;
+    }
+  }
+
+  @keyframes scroll-bounce {
+    0%,
+    100% {
+      transform: translate(-50%, 0);
+    }
+    50% {
+      transform: translate(-50%, 9px);
+    }
+  }
 </style>
+
+<script>
+  const scrollCue = document.querySelector('.scroll-cue');
+  if (scrollCue) {
+    const fadeThreshold = window.innerHeight * 0.2; // 10% of viewport height
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > fadeThreshold) {
+        scrollCue.classList.add('hidden');
+      } else {
+        scrollCue.classList.remove('hidden');
+      }
+    });
+  }
+</script>

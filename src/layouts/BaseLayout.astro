@@ -2,6 +2,7 @@
 import "~/styles/global.css";
 
 import smartypants from "smartypants";
+import GridGlow from "~/components/GridGlow";
 
 const siteName = "Ma Galerie - Aazain";
 
@@ -36,6 +37,12 @@ const initialPalette = VALID_PALETTES.includes(paletteCookie ?? "")
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`;
+
+// Cursor grid-glow everywhere except the albums "desktop" page (it has its own
+// interactive canvas). Individual album pages keep it.
+const albumsDesktopPath =
+  Astro.url.pathname === "/albums" || Astro.url.pathname === "/albums/";
+const showGridGlow = !albumsDesktopPath;
 ---
 
 <html lang="en" data-theme={initialTheme} data-palette={initialPalette} class={initialTheme === "dark" ? "dark" : undefined} style={initialTheme ? `color-scheme: ${initialTheme}` : undefined}>
@@ -96,6 +103,7 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
     }
     </head>
   <body>
+    {showGridGlow && <GridGlow client:load />}
     <header class="site-header">
       <nav class="nav">
         <div class="brand"><a href="/">Ma Galerie</a></div>
@@ -383,5 +391,6 @@ const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`
         if (e.key === "Escape") { openMenu(false); closePalettePanel(); }
       });
     </script>
+
   </body>
 </html>

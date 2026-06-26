@@ -1,6 +1,5 @@
 import {
   Check,
-  ChevronDown,
   ChevronRight,
   Edit2,
   Folder,
@@ -381,7 +380,7 @@ export default function AlbumManager() {
       <div
         className={cn(
           viewMode === "grid"
-            ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-start"
+            ? "grid grid-cols-2 gap-4 items-start"
             : "space-y-4",
         )}
       >
@@ -397,22 +396,39 @@ export default function AlbumManager() {
               className={cn(
                 "admin-card-inner rounded-lg overflow-hidden",
                 // When expanded in grid view, span full width
-                viewMode === "grid" && isExpanded && "md:col-span-2",
+                viewMode === "grid" && isExpanded && "col-span-2",
               )}
             >
               {/* Album Header */}
-              <div className="flex items-center justify-between p-4 admin-bg-muted">
-                <div className="flex items-center gap-3 flex-1">
+              <div
+                className={cn(
+                  "flex p-4 admin-bg-muted",
+                  viewMode === "grid" && !isExpanded
+                    ? "flex-col items-center gap-2 text-center"
+                    : "items-center justify-between",
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex gap-3 min-w-0",
+                    viewMode === "grid" && !isExpanded
+                      ? "flex-col items-center w-full"
+                      : "items-center flex-1",
+                  )}
+                >
                   <button
                     type="button"
                     onClick={() => toggleAlbum(album.id)}
                     className="admin-icon-btn"
                   >
-                    {isExpanded ? (
-                      <ChevronDown className="w-5 h-5" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5" />
-                    )}
+                    <ChevronRight
+                      className="w-5 h-5 transition-transform duration-300 ease-out"
+                      style={{
+                        transform: isExpanded
+                          ? "rotate(90deg)"
+                          : "rotate(0deg)",
+                      }}
+                    />
                   </button>
 
                   {/* Album Icon with Upload */}
@@ -490,17 +506,22 @@ export default function AlbumManager() {
                       </button>
                     </div>
                   ) : (
-                    <div>
-                      <h3 className="font-medium admin-text-primary">
+                    <div className="min-w-0 w-full">
+                      <h3 className="font-medium admin-text-primary line-clamp-2">
                         {album.title}
                       </h3>
-                      <p className="text-xs admin-text-muted">
+                      <p className="text-xs admin-text-muted truncate">
                         /{album.slug} • {albumImages.length} images
                       </p>
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    "flex items-center gap-2",
+                    viewMode === "grid" && !isExpanded && "hidden",
+                  )}
+                >
                   {!isEditing && (
                     <button
                       type="button"
@@ -523,122 +544,138 @@ export default function AlbumManager() {
                 </div>
               </div>
 
-              {/* Album Content (Expanded) */}
-              {isExpanded && (
-                <div className="p-4 space-y-4">
-                  {/* Upload Area */}
-                  <AlbumDropzone
-                    albumId={album.id}
-                    onDrop={onDrop}
-                    isUploading={isUploading}
-                  />
+              {/* Album Content (Expanded) — smooth open/close */}
+              <div
+                className="album-collapse"
+                style={{
+                  display: "grid",
+                  gridTemplateRows: isExpanded ? "1fr" : "0fr",
+                  transition:
+                    "grid-template-rows 0.32s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              >
+                <div style={{ overflow: "hidden", minHeight: 0 }}>
+                  <div
+                    className="p-4 space-y-4"
+                    style={{
+                      opacity: isExpanded ? 1 : 0,
+                      transition: "opacity 0.25s ease",
+                    }}
+                  >
+                    {/* Upload Area */}
+                    <AlbumDropzone
+                      albumId={album.id}
+                      onDrop={onDrop}
+                      isUploading={isUploading}
+                    />
 
-                  {/* Images Grid */}
-                  {albumImages.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {albumImages.map((image) => (
-                        <div
-                          key={image.id}
-                          className="group relative admin-image-card"
-                        >
+                    {/* Images Grid */}
+                    {albumImages.length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {albumImages.map((image) => (
                           <div
-                            className="aspect-square relative"
-                            style={{
-                              backgroundColor:
-                                "color-mix(in oklab, var(--text) 5%, transparent)",
-                            }}
+                            key={image.id}
+                            className="group relative admin-image-card"
                           >
-                            <img
-                              src={image.src}
-                              alt={image.alt || ""}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
-                            <div className="admin-image-overlay" />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleDeleteImage(image.id, image.src)
-                              }
-                              className="absolute top-2 right-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            <div
+                              className="aspect-square relative"
                               style={{
                                 backgroundColor:
-                                  "color-mix(in oklab, var(--bg-app) 90%, transparent)",
-                                color: "#ef4444",
+                                  "color-mix(in oklab, var(--text) 5%, transparent)",
                               }}
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <div className="p-3">
-                            {editingImage === image.id ? (
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  value={editingAlt}
-                                  onChange={(e) =>
-                                    setEditingAlt(e.target.value)
-                                  }
-                                  className="admin-input flex-1 px-2 py-1 text-xs rounded"
-                                  placeholder="Image name"
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter")
-                                      handleRenameImage(image.id);
-                                    if (e.key === "Escape") {
+                              <img
+                                src={image.src}
+                                alt={image.alt || ""}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                              <div className="admin-image-overlay" />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteImage(image.id, image.src)
+                                }
+                                className="absolute top-2 right-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                style={{
+                                  backgroundColor:
+                                    "color-mix(in oklab, var(--bg-app) 90%, transparent)",
+                                  color: "#ef4444",
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="p-3">
+                              {editingImage === image.id ? (
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={editingAlt}
+                                    onChange={(e) =>
+                                      setEditingAlt(e.target.value)
+                                    }
+                                    className="admin-input flex-1 px-2 py-1 text-xs rounded"
+                                    placeholder="Image name"
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter")
+                                        handleRenameImage(image.id);
+                                      if (e.key === "Escape") {
+                                        setEditingImage(null);
+                                        setEditingAlt("");
+                                      }
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRenameImage(image.id)}
+                                    className="admin-icon-btn success"
+                                  >
+                                    <Check className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
                                       setEditingImage(null);
                                       setEditingAlt("");
-                                    }
-                                  }}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => handleRenameImage(image.id)}
-                                  className="admin-icon-btn success"
-                                >
-                                  <Check className="w-3 h-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditingImage(null);
-                                    setEditingAlt("");
-                                  }}
-                                  className="admin-icon-btn"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-between">
-                                <p
-                                  className="text-xs admin-text-muted truncate flex-1"
-                                  title={image.alt || "No name"}
-                                >
-                                  {image.alt || "No name"}
-                                </p>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditingImage(image.id);
-                                    setEditingAlt(image.alt || "");
-                                  }}
-                                  className="admin-icon-btn opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <Edit2 className="w-3 h-3" />
-                                </button>
-                              </div>
-                            )}
+                                    }}
+                                    className="admin-icon-btn"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between">
+                                  <p
+                                    className="text-xs admin-text-muted truncate flex-1"
+                                    title={image.alt || "No name"}
+                                  >
+                                    {image.alt || "No name"}
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingImage(image.id);
+                                      setEditingAlt(image.alt || "");
+                                    }}
+                                    className="admin-icon-btn opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Edit2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center admin-text-muted py-8 text-sm">
-                      No images in this album yet. Upload some!
-                    </p>
-                  )}
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center admin-text-muted py-8 text-sm">
+                        No images in this album yet.
+                      </p>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           );
         })}

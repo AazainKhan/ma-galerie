@@ -1,6 +1,8 @@
 ---
 import { Image } from "astro:assets";
 import Hero from "~/components/Hero.astro";
+import TypewriterSection from "~/components/TypewriterSection";
+import StickyScroll from "~/components/ui/sticky-scroll";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import "@fancyapps/ui/dist/fancybox/fancybox.css";
 
@@ -13,6 +15,7 @@ if (db) {
       .prepare(`
         SELECT i.* FROM images i
         LEFT JOIN albums a ON i.album_id = a.id
+        WHERE a.slug IS NULL OR a.slug != 'about-moi'
         ORDER BY i.created_at DESC
       `)
       .all();
@@ -50,7 +53,11 @@ const lazyImages = images.slice(6);
   description="A collection of my favorite photos."
 >
   <Hero />
-  
+
+  <StickyScroll client:load />
+
+  <TypewriterSection client:load />
+
   {images.length > 0 && (
     <section class="justified-gallery" id="photoswipe">
       {criticalImages.map((image, index) => (

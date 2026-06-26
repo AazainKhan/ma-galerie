@@ -32,3 +32,6 @@ pnpm-debug.log*
 .github/copilot-instructions.md
 .wrangler/
 .dev.vars
+
+#docs
+monetization.md

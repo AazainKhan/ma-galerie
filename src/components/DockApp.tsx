@@ -12,6 +12,7 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
+import { toCanvas } from "html-to-image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // ─── Dark mode ────────────────────────────────────────────────
@@ -277,7 +278,7 @@ type AppConfig = {
   height: number;
   minWidth: number;
   minHeight: number;
-  Window: React.FC;
+  Window: React.FC<{ setTitle?: (title: string) => void }>;
 };
 
 type WindowState = {
@@ -288,6 +289,44 @@ type WindowState = {
   w: number;
   h: number;
   zIndex: number;
+  title?: string;
+  minimized?: boolean;
+};
+
+// Session-only note pinned to the desktop (not persisted across reloads)
+type NoteState = {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  color: string;
+};
+
+// Sticky colour palette (key → CSS gradient). Light pastels keep text legible.
+const STICKY_COLORS: Record<string, string> = {
+  yellow: "linear-gradient(180deg, #fff7a0 0%, #ffe55c 100%)",
+  pink: "linear-gradient(180deg, #ffd9ec 0%, #ffb3d9 100%)",
+  blue: "linear-gradient(180deg, #cdeffd 0%, #9bdcfb 100%)",
+  green: "linear-gradient(180deg, #e2f9bf 0%, #c3ec90 100%)",
+  purple: "linear-gradient(180deg, #eccff2 0%, #d6a9e8 100%)",
+  orange: "linear-gradient(180deg, #ffe2b8 0%, #ffc97d 100%)",
+};
+const STICKY_SWATCH: Record<string, string> = {
+  yellow: "#ffe55c",
+  pink: "#ffb3d9",
+  blue: "#9bdcfb",
+  green: "#c3ec90",
+  purple: "#d6a9e8",
+  orange: "#ffc97d",
+};
+
+// Session-only file saved to the virtual desktop (not persisted across reloads)
+type FileState = {
+  id: string;
+  name: string;
+  text: string;
+  x: number;
+  y: number;
 };
 
 type CtxMenuState = { appId: string; x: number; y: number } | null;
@@ -803,12 +842,12 @@ function SpotifyApp() {
       <div
         style={{
           display: "flex",
-          gap: 4,
-          padding: "7px 10px",
+          flexWrap: "wrap",
+          gap: 6,
+          padding: "8px 12px",
           flexShrink: 0,
           background: "#121212",
           borderBottom: "1px solid #282828",
-          overflowX: "auto",
         }}
       >
         {SPOTIFY_PLAYLISTS.map((p, i) => (
@@ -864,35 +903,211 @@ function SpotifyApp() {
   );
 }
 
-function TextEditApp() {
+function TextEditApp({ setTitle }: { setTitle?: (title: string) => void }) {
   const dark = useDarkMode();
+  // Each TextEdit window is its own document (session-only, lives while open).
   const [text, setText] = useState("");
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
+
+  // "New Document" — ask the dock to open a fresh TextEdit window.
+  const newDocument = () => {
+    window.dispatchEvent(new CustomEvent("mg:textedit-new"));
+  };
+
+  // Save to Desktop → ask for a filename first (macOS "Save As" sheet).
+  const saveToDesktop = () => {
+    if (!text.trim()) return;
+    const suggested =
+      text
+        .split("\n")[0]
+        .trim()
+        .slice(0, 24)
+        .replace(/[^\w\- ]+/g, "")
+        .trim() || "Untitled";
+    setSaveName(suggested);
+    setSaveOpen(true);
+  };
+
+  // Confirm the name → drop a new named file and rename this window.
+  const confirmSave = () => {
+    const base = saveName.trim() || "Untitled";
+    const fileName = base.endsWith(".txt") ? base : `${base}.txt`;
+    window.dispatchEvent(
+      new CustomEvent("mg:save-file", { detail: { text, name: fileName } }),
+    );
+    setTitle?.(fileName);
+    setSaveOpen(false);
+  };
+
+  // Let the user keep a permanent copy as a downloaded .txt file.
+  const downloadNote = () => {
+    const firstLine = text.split("\n")[0].trim().slice(0, 40);
+    const safe = firstLine.replace(/[^\w\- ]+/g, "").trim() || "Untitled";
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${safe}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const canAct = text.trim().length > 0;
   const bg = dark ? "#1e1e1e" : "#fff";
   const toolBg = dark ? "#2d2d2d" : "#f4f4f4";
   const toolBorder = dark ? "#444" : "#ddd";
+  const btnBase: React.CSSProperties = {
+    fontFamily: "-apple-system,sans-serif",
+    fontSize: 11,
+    fontWeight: 500,
+    padding: "3px 9px",
+    borderRadius: 6,
+    border: `1px solid ${dark ? "#555" : "#ccc"}`,
+    background: dark ? "#3a3a3a" : "#fff",
+    color: dark ? "#ddd" : "#333",
+    cursor: "pointer",
+  };
+  const dialogBtn: React.CSSProperties = {
+    fontFamily: "-apple-system,sans-serif",
+    fontSize: 12,
+    fontWeight: 500,
+    padding: "5px 14px",
+    borderRadius: 7,
+    border: `1px solid ${dark ? "#555" : "#ccc"}`,
+    background: dark ? "#3a3a3a" : "#fff",
+    color: dark ? "#ddd" : "#333",
+    cursor: "pointer",
+  };
   return (
     <div
       style={{
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         height: "100%",
         background: bg,
       }}
     >
+      {saveOpen && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 20,
+            display: "grid",
+            placeItems: "center",
+            background: "rgba(0,0,0,0.28)",
+          }}
+        >
+          <div
+            style={{
+              width: 280,
+              maxWidth: "86%",
+              padding: 16,
+              borderRadius: 12,
+              background: dark ? "#2b2b2e" : "#fff",
+              color: dark ? "#eee" : "#222",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.45)",
+              fontFamily: "-apple-system,sans-serif",
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
+              Save As
+            </div>
+            <input
+              // biome-ignore lint/a11y/noAutofocus: focus the name field when the save sheet opens
+              autoFocus
+              value={saveName}
+              onChange={(e) => setSaveName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") confirmSave();
+                if (e.key === "Escape") setSaveOpen(false);
+              }}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "7px 10px",
+                borderRadius: 7,
+                border: `1px solid ${dark ? "#555" : "#ccc"}`,
+                background: dark ? "#1e1e1e" : "#fff",
+                color: dark ? "#eee" : "#222",
+                fontSize: 13,
+                outline: "none",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 8,
+                marginTop: 14,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setSaveOpen(false)}
+                style={dialogBtn}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmSave}
+                style={{
+                  ...dialogBtn,
+                  background: "#0a84ff",
+                  borderColor: "#0a84ff",
+                  color: "#fff",
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div
         className="textedit-toolbar"
         style={{ background: toolBg, borderBottom: `1px solid ${toolBorder}` }}
       >
-        <span
-          style={{
-            fontSize: 11,
-            color: dark ? "#999" : "#666",
-            fontFamily: "-apple-system,sans-serif",
-          }}
+        <button
+          type="button"
+          onClick={newDocument}
+          title="Open a new document window"
+          style={btnBase}
         >
           New Document
-        </span>
+        </button>
+        <button
+          type="button"
+          onClick={saveToDesktop}
+          disabled={!canAct}
+          title="Save as a file on the desktop (this session only)"
+          style={{
+            ...btnBase,
+            cursor: canAct ? "pointer" : "default",
+            opacity: canAct ? 1 : 0.45,
+          }}
+        >
+          Save to Desktop
+        </button>
+        <button
+          type="button"
+          onClick={downloadNote}
+          disabled={!canAct}
+          title="Download as a .txt file"
+          style={{
+            ...btnBase,
+            cursor: canAct ? "pointer" : "default",
+            opacity: canAct ? 1 : 0.45,
+          }}
+        >
+          Download
+        </button>
         <div style={{ flex: 1 }} />
         <span
           style={{
@@ -1127,9 +1342,9 @@ const APP_CONFIGS: AppConfig[] = [
     label: "Spotify",
     href: "https://open.spotify.com/",
     iconSrc: "/icons/dock/spotify.png",
-    width: 400,
-    height: 500,
-    minWidth: 340,
+    width: 560,
+    height: 540,
+    minWidth: 420,
     minHeight: 400,
     Window: SpotifyApp,
   },
@@ -1175,7 +1390,66 @@ export default function DockApp() {
   const [openApps, setOpenApps] = useState<Set<string>>(new Set());
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState>(null);
   const [windows, setWindows] = useState<WindowState[]>([]);
+  // Seed two stickies (different colors) on every load of the desktop.
+  const [notes, setNotes] = useState<NoteState[]>(() => [
+    { id: "seed-1", text: "", x: 44, y: 128, color: "yellow" },
+    { id: "seed-2", text: "", x: 80, y: 168, color: "pink" },
+  ]);
+  const [files, setFiles] = useState<FileState[]>([]);
   const topZ = useRef(200);
+
+  // Stickies (dock app): spawn / edit / remove session-only notes.
+  const addSticky = useCallback(() => {
+    setNotes((prev) => {
+      const i = prev.length;
+      return [
+        ...prev,
+        {
+          id: `note-${Date.now()}`,
+          text: "",
+          x: 48 + (i % 6) * 28,
+          y: 130 + (i % 6) * 28,
+          color: "yellow",
+        },
+      ];
+    });
+  }, []);
+  const updateNote = useCallback((id: string, text: string) => {
+    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, text } : n)));
+  }, []);
+  const setNoteColor = useCallback((id: string, color: string) => {
+    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, color } : n)));
+  }, []);
+  const removeNote = useCallback((id: string) => {
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
+  // TextEdit "Save to Desktop" drops a real (session-only) file on the desktop.
+  useEffect(() => {
+    const onSaveFile = (e: Event) => {
+      const detail = (e as CustomEvent<{ text: string; name?: string }>).detail;
+      const text = detail?.text ?? "";
+      if (!text.trim()) return;
+      const firstLine = text.split("\n")[0].trim().slice(0, 24);
+      const fallback = `${firstLine.replace(/[^\w\- ]+/g, "").trim() || "Untitled"}.txt`;
+      const name = detail?.name?.trim() || fallback;
+      setFiles((prev) => {
+        const i = prev.length;
+        return [
+          ...prev,
+          {
+            id: `${Date.now()}`,
+            name,
+            text,
+            x: 24 + Math.floor(i / 5) * 110,
+            y: 110 + (i % 5) * 118,
+          },
+        ];
+      });
+    };
+    window.addEventListener("mg:save-file", onSaveFile);
+    return () => window.removeEventListener("mg:save-file", onSaveFile);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1199,21 +1473,36 @@ export default function DockApp() {
     setWindows((prev) => {
       const ex = prev.find((w) => w.app.id === cfg.id);
       if (ex)
-        return prev.map((w) => (w.app.id === cfg.id ? { ...w, zIndex: z } : w));
+        return prev.map((w) =>
+          w.app.id === cfg.id ? { ...w, zIndex: z, minimized: false } : w,
+        );
       const iw = typeof window !== "undefined" ? window.innerWidth : 1200;
       const ih = typeof window !== "undefined" ? window.innerHeight : 800;
-      const off = prev.length * 24;
-      const maxW = iw - 16;
-      const maxH = ih - 80;
-      const winW = Math.min(cfg.width, maxW);
-      const winH = Math.min(cfg.height, maxH);
+      const isMobile = iw < 640;
+      let winW: number;
+      let winH: number;
+      let wx: number;
+      let wy: number;
+      if (isMobile) {
+        // Mobile: fill the screen width, sit below the header, clear the dock.
+        winW = iw - 16;
+        winH = Math.max(240, Math.min(cfg.height, ih - 150));
+        wx = 8;
+        wy = 54;
+      } else {
+        const off = prev.length * 24;
+        winW = Math.min(cfg.width, iw - 16);
+        winH = Math.min(cfg.height, ih - 80);
+        wx = Math.max(8, Math.round((iw - winW) / 2) + off);
+        wy = Math.max(50, Math.round((ih - winH) / 3) + off);
+      }
       return [
         ...prev,
         {
           id: `${cfg.id}-${Date.now()}`,
           app: cfg,
-          x: Math.max(8, Math.round((iw - winW) / 2) + off),
-          y: Math.max(50, Math.round((ih - winH) / 3) + off),
+          x: wx,
+          y: wy,
           w: winW,
           h: winH,
           zIndex: z,
@@ -1221,6 +1510,24 @@ export default function DockApp() {
       ];
     });
   }, []);
+
+  // Open a saved desktop file in a Mac window (reuses the traffic-light chrome).
+  const openFile = useCallback(
+    (file: FileState) => {
+      openApp({
+        id: `file-${file.id}`,
+        label: file.name,
+        href: "#",
+        iconSrc: "/icons/dock/textedit.png",
+        width: 460,
+        height: 420,
+        minWidth: 280,
+        minHeight: 200,
+        Window: () => <FileViewer text={file.text} />,
+      });
+    },
+    [openApp],
+  );
 
   const closeWindow = useCallback((appId: string) => {
     setWindows((prev) => prev.filter((w) => w.app.id !== appId));
@@ -1231,6 +1538,29 @@ export default function DockApp() {
     });
   }, []);
 
+  // Rename a window's titlebar (used when a TextEdit doc is saved with a name).
+  const setWindowTitle = useCallback((id: string, title: string) => {
+    setWindows((prev) => prev.map((w) => (w.id === id ? { ...w, title } : w)));
+  }, []);
+
+  // Yellow button → genie minimize (window stays open, collapsed to the dock).
+  const minimizeWindow = useCallback((appId: string) => {
+    setWindows((prev) =>
+      prev.map((w) => (w.app.id === appId ? { ...w, minimized: true } : w)),
+    );
+  }, []);
+
+  // Restore (un-minimize) + raise a window — when its dock icon is clicked.
+  const restoreWindow = useCallback((appId: string) => {
+    topZ.current += 1;
+    const z = topZ.current;
+    setWindows((prev) =>
+      prev.map((w) =>
+        w.app.id === appId ? { ...w, zIndex: z, minimized: false } : w,
+      ),
+    );
+  }, []);
+
   const focusWindow = useCallback((appId: string) => {
     topZ.current += 1;
     const z = topZ.current;
@@ -1238,6 +1568,41 @@ export default function DockApp() {
       prev.map((w) => (w.app.id === appId ? { ...w, zIndex: z } : w)),
     );
   }, []);
+
+  // ── TextEdit is multi-window: each "New Document" is its own window ──
+  const newTextEditDoc = useCallback(() => {
+    const base = APP_CONFIGS.find((a) => a.id === "textedit");
+    if (base) openApp({ ...base, id: `textedit-${Date.now()}` });
+  }, [openApp]);
+
+  const openTextEdit = useCallback(() => {
+    const tes = windows.filter((w) => w.app.id.startsWith("textedit"));
+    if (!tes.length) {
+      newTextEditDoc();
+      return;
+    }
+    // Prefer un-minimizing a docked window over focusing an open one.
+    const minimized = tes.filter((w) => w.minimized);
+    const target = minimized.length
+      ? minimized[minimized.length - 1]
+      : tes[tes.length - 1];
+    restoreWindow(target.app.id);
+  }, [windows, restoreWindow, newTextEditDoc]);
+
+  const handleAppOpen = useCallback(
+    (cfg: AppConfig) => {
+      if (cfg.id === "textedit") openTextEdit();
+      else openApp(cfg);
+    },
+    [openTextEdit, openApp],
+  );
+
+  // "New Document" requests from the window button or dock right-click.
+  useEffect(() => {
+    const onNew = () => newTextEditDoc();
+    window.addEventListener("mg:textedit-new", onNew);
+    return () => window.removeEventListener("mg:textedit-new", onNew);
+  }, [newTextEditDoc]);
 
   const resizeWindow = useCallback((appId: string, dw: number, dh: number) => {
     setWindows((prev) =>
@@ -1252,15 +1617,16 @@ export default function DockApp() {
     );
   }, []);
 
-  const handleCtxMenu = useCallback((cfg: AppConfig, e: React.MouseEvent) => {
+  const handleCtxMenu = useCallback((appId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setCtxMenu({ appId: cfg.id, x: e.clientX, y: e.clientY - 100 });
+    setCtxMenu({ appId, x: e.clientX, y: e.clientY - 100 });
   }, []);
 
   const activeCfg = ctxMenu
     ? APP_CONFIGS.find((a) => a.id === ctxMenu.appId)
     : null;
+  const texteditOpen = [...openApps].some((id) => id.startsWith("textedit"));
 
   return (
     <>
@@ -1271,7 +1637,26 @@ export default function DockApp() {
           win={win}
           onClose={() => closeWindow(win.app.id)}
           onFocus={() => focusWindow(win.app.id)}
+          onMinimize={() => minimizeWindow(win.app.id)}
           onResize={(dw, dh) => resizeWindow(win.app.id, dw, dh)}
+          onSetTitle={(t) => setWindowTitle(win.id, t)}
+        />
+      ))}
+
+      {/* ── Desktop files (session only) ── */}
+      {files.map((f) => (
+        <FileIcon key={f.id} file={f} onOpen={() => openFile(f)} />
+      ))}
+
+      {/* ── Desktop sticky notes (session only) ── */}
+      {notes.map((n) => (
+        <StickyNote
+          key={n.id}
+          note={n}
+          onChange={(t) => updateNote(n.id, t)}
+          onColor={(c) => setNoteColor(n.id, c)}
+          onNewSticky={addSticky}
+          onClose={() => removeNote(n.id)}
         />
       ))}
 
@@ -1301,12 +1686,25 @@ export default function DockApp() {
               mouseLeft={mouseLeft}
               iconSrc={cfg.iconSrc}
               label={cfg.label}
-              isOpen={openApps.has(cfg.id)}
+              isOpen={
+                cfg.id === "textedit" ? texteditOpen : openApps.has(cfg.id)
+              }
               isMuted={ctxMenu?.appId === cfg.id}
-              onOpen={() => openApp(cfg)}
-              onContextMenu={(e) => handleCtxMenu(cfg, e)}
+              onOpen={() => handleAppOpen(cfg)}
+              onContextMenu={(e) => handleCtxMenu(cfg.id, e)}
             />
           ))}
+          <AppIcon
+            key="stickies"
+            id="dock-icon-stickies"
+            mouseLeft={mouseLeft}
+            iconSrc="/icons/dock/stickies.png"
+            label="Stickies"
+            isOpen={notes.length > 0}
+            isMuted={ctxMenu?.appId === "stickies"}
+            onOpen={addSticky}
+            onContextMenu={(e) => handleCtxMenu("stickies", e)}
+          />
         </motion.div>
       </div>
 
@@ -1336,12 +1734,23 @@ export default function DockApp() {
                   key={cfg.id}
                   mouseLeft={mouseLeft}
                   iconSrc={cfg.iconSrc}
-                  isOpen={openApps.has(cfg.id)}
+                  isOpen={
+                    cfg.id === "textedit" ? texteditOpen : openApps.has(cfg.id)
+                  }
                   isMuted={ctxMenu?.appId === cfg.id}
-                  onOpen={() => openApp(cfg)}
-                  onContextMenu={(e) => handleCtxMenu(cfg, e)}
+                  onOpen={() => handleAppOpen(cfg)}
+                  onContextMenu={(e) => handleCtxMenu(cfg.id, e)}
                 />
               ))}
+              <MobileAppIcon
+                key="stickies"
+                mouseLeft={mouseLeft}
+                iconSrc="/icons/dock/stickies.png"
+                isOpen={notes.length > 0}
+                isMuted={ctxMenu?.appId === "stickies"}
+                onOpen={addSticky}
+                onContextMenu={(e) => handleCtxMenu("stickies", e)}
+              />
             </div>
           </motion.div>
         </div>
@@ -1355,7 +1764,7 @@ export default function DockApp() {
               <button
                 key={cfg.id}
                 type="button"
-                onClick={() => openApp(cfg)}
+                onClick={() => handleAppOpen(cfg)}
                 className="flex flex-col items-center gap-1 bg-transparent border-0 p-0 cursor-pointer w-[72px]"
               >
                 <div className="aspect-square w-[60px] overflow-hidden rounded-xl flex-shrink-0">
@@ -1374,66 +1783,387 @@ export default function DockApp() {
                 </span>
               </button>
             ))}
+            <button
+              key="stickies"
+              type="button"
+              onClick={addSticky}
+              className="flex flex-col items-center gap-1 bg-transparent border-0 p-0 cursor-pointer w-[72px]"
+            >
+              <div className="aspect-square w-[60px] overflow-hidden rounded-xl flex-shrink-0">
+                <img
+                  src="/icons/dock/stickies.png"
+                  alt="Stickies"
+                  className="h-full w-full object-cover select-none pointer-events-none"
+                  draggable={false}
+                />
+              </div>
+              <span
+                className="text-[10px] leading-tight text-center w-full line-clamp-2 opacity-85 px-0.5"
+                style={{ color: "var(--text)" }}
+              >
+                Stickies
+              </span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* ── Dock context menu ── */}
-      {ctxMenu && activeCfg && (
+      {ctxMenu && (
         <div
           className="ctx-menu dock-ctx-menu"
           style={{ left: ctxMenu.x, top: ctxMenu.y }}
           onContextMenu={(e) => e.preventDefault()}
         >
-          <button
-            type="button"
-            className="ctx-menu-item"
-            onClick={() => {
-              openApp(activeCfg);
-              setCtxMenu(null);
-            }}
-          >
-            Open
-          </button>
-          <div className="ctx-menu-separator" />
-          {openApps.has(activeCfg.id) ? (
+          {ctxMenu.appId === "stickies" ? (
             <button
               type="button"
-              className="ctx-menu-item destructive"
+              className="ctx-menu-item"
               onClick={() => {
-                closeWindow(activeCfg.id);
+                addSticky();
                 setCtxMenu(null);
               }}
             >
-              Quit
+              New Sticky
             </button>
-          ) : (
-            <button type="button" className="ctx-menu-item disabled" disabled>
-              Quit
+          ) : ctxMenu.appId === "textedit" ? (
+            <button
+              type="button"
+              className="ctx-menu-item"
+              onClick={() => {
+                newTextEditDoc();
+                setCtxMenu(null);
+              }}
+            >
+              New Document
             </button>
-          )}
+          ) : activeCfg ? (
+            <>
+              <button
+                type="button"
+                className="ctx-menu-item"
+                onClick={() => {
+                  openApp(activeCfg);
+                  setCtxMenu(null);
+                }}
+              >
+                Open
+              </button>
+              <div className="ctx-menu-separator" />
+              {openApps.has(activeCfg.id) ? (
+                <button
+                  type="button"
+                  className="ctx-menu-item destructive"
+                  onClick={() => {
+                    closeWindow(activeCfg.id);
+                    setCtxMenu(null);
+                  }}
+                >
+                  Quit
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="ctx-menu-item disabled"
+                  disabled
+                >
+                  Quit
+                </button>
+              )}
+            </>
+          ) : null}
         </div>
       )}
     </>
   );
 }
 
-// ─── AppWindow (drag from titlebar + resize handle) ───────────
+// Locate the dock icon a window should genie into (textedit docs + files
+// share the TextEdit icon; on mobile there's no id → fall back to bottom).
+function dockTargetCenter(appId: string): { cx: number; cy: number } {
+  const base =
+    appId.startsWith("textedit") || appId.startsWith("file-")
+      ? "textedit"
+      : appId;
+  const el = document.getElementById(`dock-icon-${base}`);
+  if (el) {
+    const r = el.getBoundingClientRect();
+    return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+  }
+  return { cx: window.innerWidth / 2, cy: window.innerHeight - 36 };
+}
+
+// ─── Genie scanline warp ──────────────────────────────────────────────
+type GeniePt = { x: number; y: number };
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const clampT = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const eInOutCubic = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+const eInQuad = (t: number) => t * t;
+const eOutQuad = (t: number) => 1 - (1 - t) ** 2;
+
+// Redraw the captured window image row-by-row, each row easing toward the dock
+// on a staggered schedule so the window forms a "neck" and pours into the dock.
+function renderGenie(
+  ctx: CanvasRenderingContext2D,
+  off: HTMLCanvasElement,
+  W: number,
+  H: number,
+  rawT: number,
+  dir: "minimize" | "restore",
+  dock: GeniePt,
+  winPt: GeniePt,
+) {
+  const WIN_W = off.width;
+  const WIN_H = off.height;
+  ctx.clearRect(0, 0, W, H);
+  for (let y = 0; y < WIN_H; y++) {
+    const r = y / WIN_H;
+    const rowXStart = dir === "minimize" ? (1 - r) * 0.65 : r * 0.65;
+    const xE = eInOutCubic(clampT((rawT - rowXStart) / (1 - rowXStart), 0, 1));
+    const rowYStart = dir === "minimize" ? (1 - r) * 0.2 : r * 0.2;
+    const yE = eInQuad(clampT((rawT - rowYStart) / (1 - rowYStart), 0, 1));
+    let left: number;
+    let right: number;
+    let destY: number;
+    if (dir === "minimize") {
+      left = lerp(winPt.x, dock.x, xE);
+      right = lerp(winPt.x + WIN_W, dock.x, xE);
+      destY = lerp(winPt.y + y, dock.y, yE);
+    } else {
+      left = lerp(dock.x, winPt.x, xE);
+      right = lerp(dock.x, winPt.x + WIN_W, xE);
+      destY = lerp(dock.y, winPt.y + y, yE);
+    }
+    const rowW = right - left;
+    if (rowW < 0.8) continue;
+    ctx.drawImage(off, 0, y, WIN_W, 1, left, destY, rowW, 1);
+  }
+  const glowRaw = dir === "minimize" ? rawT : 1 - rawT;
+  if (glowRaw > 0.75) {
+    const a = eOutQuad((glowRaw - 0.75) / 0.25) * 0.3;
+    const g = ctx.createRadialGradient(dock.x, dock.y, 0, dock.x, dock.y, 55);
+    g.addColorStop(0, `rgba(255,255,255,${a})`);
+    g.addColorStop(1, "transparent");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+// ─── AppWindow (drag from titlebar + resize handle + genie minimize) ──
 function AppWindow({
   win,
   onClose,
   onFocus,
+  onMinimize,
   onResize,
+  onSetTitle,
 }: {
   win: WindowState;
   onClose: () => void;
   onFocus: () => void;
+  onMinimize: () => void;
   onResize: (dw: number, dh: number) => void;
+  onSetTitle: (title: string) => void;
 }) {
   const x = useMotionValue(win.x);
   const y = useMotionValue(win.y);
   const dragControls = useDragControls();
   const { Window } = win.app;
+  const winElRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const offRef = useRef<HTMLCanvasElement | null>(null);
+  const home = useRef({ x: win.x, y: win.y });
+  const first = useRef(true);
+  const [animating, setAnimating] = useState(false);
+  // Whether the window is settled in the dock (hidden). Kept separate from
+  // win.minimized so the window stays VISIBLE while it's being captured.
+  const [collapsed, setCollapsed] = useState(false);
+  const genie = useRef<{
+    dir: "minimize" | "restore";
+    dock: GeniePt;
+    winPt: GeniePt;
+  } | null>(null);
+
+  // Capture the window (minimize) then run the scanline genie warp.
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const dir = win.minimized ? "minimize" : "restore";
+      if (dir === "minimize") {
+        home.current = { x: x.get(), y: y.get() };
+        const el = winElRef.current;
+        if (el) {
+          try {
+            // Capture the clone without the window's translate (and forced
+            // visible) so the bitmap is the plain WIN_W×WIN_H window content.
+            offRef.current = await toCanvas(el, {
+              pixelRatio: 1,
+              cacheBust: true,
+              style: { transform: "none", visibility: "visible" },
+            });
+          } catch {
+            offRef.current = null;
+          }
+        }
+      }
+      if (cancelled) return;
+      if (!offRef.current) {
+        // No capture → skip the warp, just settle to the target state.
+        setCollapsed(!!win.minimized);
+        return;
+      }
+      const { cx, cy } = dockTargetCenter(win.app.id);
+      genie.current = {
+        dir,
+        dock: { x: cx, y: cy },
+        winPt: { x: home.current.x, y: home.current.y },
+      };
+      setAnimating(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [win.minimized, win.app.id, x, y]);
+
+  // Drive the per-frame scanline render while animating.
+  useEffect(() => {
+    if (!animating) return;
+    const canvas = canvasRef.current;
+    const g = genie.current;
+    const off = offRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !g || !off || !ctx) {
+      setAnimating(false);
+      return;
+    }
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let raf = 0;
+    const start = performance.now();
+    const dur = 550;
+    const loop = (now: number) => {
+      const rawT = Math.min((now - start) / dur, 1);
+      renderGenie(
+        ctx,
+        off,
+        canvas.width,
+        canvas.height,
+        rawT,
+        g.dir,
+        g.dock,
+        g.winPt,
+      );
+      if (rawT < 1) {
+        raf = requestAnimationFrame(loop);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setCollapsed(genie.current?.dir === "minimize");
+        setAnimating(false);
+      }
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [animating]);
+
+  // Visible during capture; hidden only while the warp plays or once docked.
+  const hidden = animating || collapsed;
+
+  return (
+    <>
+      <motion.div
+        ref={winElRef}
+        drag
+        dragControls={dragControls}
+        dragListener={false}
+        dragMomentum={false}
+        style={{
+          x,
+          y,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          zIndex: win.zIndex,
+          width: win.w,
+          height: win.h,
+          visibility: hidden ? "hidden" : "visible",
+          pointerEvents: hidden ? "none" : "auto",
+        }}
+        onPointerDown={onFocus}
+        className={`mock-window window-${win.app.id}`}
+      >
+        {/* Titlebar */}
+        <div
+          className="window-titlebar"
+          onPointerDown={(e) => dragControls.start(e)}
+        >
+          <div className="traffic-lights">
+            <button
+              type="button"
+              className="tl tl-red"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onClose}
+              title="Close"
+            />
+            <button
+              type="button"
+              className="tl tl-yellow"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onMinimize}
+              title="Minimize"
+            />
+            <button
+              type="button"
+              className="tl tl-green"
+              onPointerDown={(e) => e.stopPropagation()}
+            />
+          </div>
+          <span className="titlebar-name">{win.title ?? win.app.label}</span>
+        </div>
+        {/* Content */}
+        <div className="mock-window-content">
+          <Window setTitle={onSetTitle} />
+        </div>
+        {/* Resize handle */}
+        <ResizeHandle onDelta={onResize} />
+      </motion.div>
+      {animating && (
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: win.zIndex,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+// ─── StickyNote (session-only, editable note pinned to the desktop) ──
+function StickyNote({
+  note,
+  onChange,
+  onColor,
+  onNewSticky,
+  onClose,
+}: {
+  note: NoteState;
+  onChange: (text: string) => void;
+  onColor: (color: string) => void;
+  onNewSticky: () => void;
+  onClose: () => void;
+}) {
+  const x = useMotionValue(note.x);
+  const y = useMotionValue(note.y);
+  const dragControls = useDragControls();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <motion.div
@@ -1447,16 +2177,15 @@ function AppWindow({
         position: "fixed",
         top: 0,
         left: 0,
-        zIndex: win.zIndex,
-        width: win.w,
-        height: win.h,
+        zIndex: 150,
+        width: 220,
+        height: 220,
+        background: STICKY_COLORS[note.color] ?? STICKY_COLORS.yellow,
       }}
-      onPointerDown={onFocus}
-      className={`mock-window window-${win.app.id}`}
+      className="sticky-note"
     >
-      {/* Titlebar */}
       <div
-        className="window-titlebar"
+        className="sticky-note-bar"
         onPointerDown={(e) => dragControls.start(e)}
       >
         <div className="traffic-lights">
@@ -1478,14 +2207,127 @@ function AppWindow({
             onPointerDown={(e) => e.stopPropagation()}
           />
         </div>
-        <span className="titlebar-name">{win.app.label}</span>
+        <div style={{ flex: 1 }} />
+        <button
+          type="button"
+          className="sticky-note-dots"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => setMenuOpen((v) => !v)}
+          title="Options"
+          aria-label="Sticky options"
+        >
+          ⋯
+        </button>
+        {menuOpen && (
+          <div
+            className="sticky-note-menu"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <div className="sticky-note-menu-label">Color</div>
+            <div className="sticky-note-swatches">
+              {Object.keys(STICKY_SWATCH).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`sticky-swatch${note.color === c ? " active" : ""}`}
+                  style={{ background: STICKY_SWATCH[c] }}
+                  title={c}
+                  aria-label={c}
+                  onClick={() => {
+                    onColor(c);
+                    setMenuOpen(false);
+                  }}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              className="sticky-note-menu-item"
+              onClick={() => {
+                onNewSticky();
+                setMenuOpen(false);
+              }}
+            >
+              New Sticky
+            </button>
+          </div>
+        )}
       </div>
-      {/* Content */}
-      <div className="mock-window-content">
-        <Window />
+      <textarea
+        className="sticky-note-body"
+        value={note.text}
+        onChange={(e) => onChange(e.target.value)}
+        onPointerDown={(e) => e.stopPropagation()}
+        placeholder="Type a note…"
+      />
+    </motion.div>
+  );
+}
+
+// ─── FileViewer (read-only content for a saved desktop file window) ──
+function FileViewer({ text }: { text: string }) {
+  const dark = useDarkMode();
+  return (
+    <div
+      style={{
+        height: "100%",
+        overflow: "auto",
+        padding: "18px 22px",
+        background: dark ? "#1e1e1e" : "#fff",
+        color: dark ? "#d4d4d4" : "#1a1a1a",
+        fontFamily: 'Georgia,"Times New Roman",serif',
+        fontSize: 14,
+        lineHeight: 1.75,
+        whiteSpace: "pre-wrap",
+        wordBreak: "break-word",
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+// ─── FileIcon (session-only file saved on the virtual desktop) ──
+function FileIcon({ file, onOpen }: { file: FileState; onOpen: () => void }) {
+  const x = useMotionValue(file.x);
+  const y = useMotionValue(file.y);
+  const lastTap = useRef(0);
+
+  const handleTap = () => {
+    const now = Date.now();
+    if (now - lastTap.current < 300) onOpen();
+    lastTap.current = now;
+  };
+
+  return (
+    <motion.div
+      drag
+      dragMomentum={false}
+      style={{
+        x,
+        y,
+        position: "fixed",
+        top: 0,
+        left: 0,
+        zIndex: 30,
+        touchAction: "none",
+        width: 90,
+      }}
+      whileDrag={{ zIndex: 200, scale: 1.04 }}
+      className="desktop-icon"
+      onTap={handleTap}
+      title="Double-click to open"
+    >
+      <div className="desktop-icon-img-wrap">
+        <div className="desktop-icon-img">
+          <img
+            src="/icons/dock/textedit.png"
+            alt={file.name}
+            draggable={false}
+          />
+        </div>
       </div>
-      {/* Resize handle */}
-      <ResizeHandle onDelta={onResize} />
+      <span className="desktop-icon-label">{file.name}</span>
     </motion.div>
   );
 }
@@ -1598,17 +2440,20 @@ function AppIcon({
                 type="button"
                 style={{ scale: scaleSpring, y, opacity: isMuted ? 0.5 : 1 }}
                 onClick={async () => {
-                  const c = animate(y, [0, -40, 0], {
-                    repeat: 2,
-                    ease: [
-                      [0, 0, 0.2, 1],
-                      [0.8, 0, 1, 1],
-                    ],
-                    duration: 0.7,
-                  });
-                  try {
-                    await c.finished;
-                  } catch (_) {}
+                  // Only bounce when launching; if already open, just focus/restore.
+                  if (!isOpen) {
+                    const c = animate(y, [0, -40, 0], {
+                      repeat: 2,
+                      ease: [
+                        [0, 0, 0.2, 1],
+                        [0.8, 0, 1, 1],
+                      ],
+                      duration: 0.7,
+                    });
+                    try {
+                      await c.finished;
+                    } catch (_) {}
+                  }
                   onOpen();
                 }}
                 onContextMenu={onContextMenu}
@@ -1696,17 +2541,19 @@ function MobileAppIcon({
           type="button"
           style={{ scale: scaleSpring, y, opacity: isMuted ? 0.5 : 1 }}
           onClick={async () => {
-            const c = animate(y, [0, -30, 0], {
-              repeat: 2,
-              ease: [
-                [0, 0, 0.2, 1],
-                [0.8, 0, 1, 1],
-              ],
-              duration: 0.7,
-            });
-            try {
-              await c.finished;
-            } catch (_) {}
+            if (!isOpen) {
+              const c = animate(y, [0, -30, 0], {
+                repeat: 2,
+                ease: [
+                  [0, 0, 0.2, 1],
+                  [0.8, 0, 1, 1],
+                ],
+                duration: 0.7,
+              });
+              try {
+                await c.finished;
+              } catch (_) {}
+            }
             onOpen();
           }}
           onContextMenu={onContextMenu}
