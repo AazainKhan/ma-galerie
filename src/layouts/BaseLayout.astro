@@ -73,13 +73,33 @@ const showGridGlow = !albumsDesktopPath;
           } else {
             delete r.dataset.palette;
           }
+
+          // ── iOS Safari status-bar colour ───────────────────────────────
+          // Set it synchronously, before first paint, from the resolved
+          // theme+palette. Safari reads theme-color once at load and ignores
+          // later JS updates, so doing it here (not after CSS loads) is what
+          // makes the bar match instead of flashing white.
+          var BG = {
+            'default':       { light: '#ffffff', dark: '#151515' },
+            'regal-navy':    { light: '#faf0ca', dark: '#0d3b66' },
+            'indigo':        { light: '#f5eeff', dark: '#42047e' },
+            'charcoal-blue': { light: '#e8f4f3', dark: '#264653' },
+            'honeydew':      { light: '#ebf5df', dark: '#1a2e16' },
+            'powder-blue':   { light: '#dce8f8', dark: '#103783' },
+            'bright-amber':  { light: '#f8c828', dark: '#003d30' },
+          };
+          var entry = BG[r.dataset.palette] || BG['default'];
+          var tc = document.querySelector('meta[name="theme-color"]');
+          if (!tc) {
+            tc = document.createElement('meta');
+            tc.setAttribute('name', 'theme-color');
+            document.head.appendChild(tc);
+          }
+          tc.setAttribute('content', entry[theme === 'dark' ? 'dark' : 'light']);
         } catch (_) {}
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Colours the iOS Safari address-bar / safe-area region to match the theme
-         (refined per-palette by JS once styles load). -->
-    <meta name="theme-color" content={initialTheme === "dark" ? "#151515" : "#ffffff"} />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalURL} />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>" />
