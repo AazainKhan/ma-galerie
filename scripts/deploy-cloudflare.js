@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ENV = process.env.NODE_ENV || "production";
@@ -21,10 +21,15 @@ try {
   console.log(`✅ Created ${assetsIgnorePath}`);
 
   // Copy raw images for direct serving
-  execSync("mkdir -p dist/images && cp -R public/images/* dist/images/", {
-    stdio: "inherit",
-  });
-  console.log("✅ Copied images to dist/images");
+  const publicImagesPath = join("public", "images");
+  if (existsSync(publicImagesPath) && readdirSync(publicImagesPath).length > 0) {
+    execSync("mkdir -p dist/images && cp -R public/images/* dist/images/", {
+      stdio: "inherit",
+    });
+    console.log("✅ Copied images to dist/images");
+  } else {
+    console.log("ℹ️  Skipping image copy; public/images is empty");
+  }
 
   // Step 3: Deploy to Cloudflare
   console.log("🌐 Deploying to Cloudflare...");
@@ -44,7 +49,11 @@ try {
       timeout: 10000,
     });
   } catch (err) {
-    console.error("Deployment failed:", err);
+    if (err?.code === "ETIMEDOUT") {
+      console.warn("⚠️  Tail timed out after deployment; ignoring.");
+    } else {
+      console.warn("⚠️  Tail check skipped:", err?.message || err);
+    }
   }
 } catch (error) {
   console.error("❌ Deployment failed:", error.message);
