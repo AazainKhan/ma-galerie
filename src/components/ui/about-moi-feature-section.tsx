@@ -116,7 +116,6 @@ function Row({ f, i }: { f: Feature; i: number }) {
         inView={inView}
         className={reversed ? "md:order-2" : ""}
       >
-        <span className="text-sm tracking-[0.3em] opacity-50">0{i + 1}</span>
         <h3
           className="mt-2 text-4xl leading-tight font-light sm:text-5xl md:text-6xl"
           style={{ fontFamily: "PPEditorialNew, serif" }}

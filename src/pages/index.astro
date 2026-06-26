@@ -63,6 +63,7 @@ const lazyImages = images.slice(6);
       {criticalImages.map((image, index) => (
         <a
           class="gallery-item"
+          data-gallery-item
           style={`--width: ${image.width}; --height: ${image.height};`}
           href={image.src}
           target="_blank"
@@ -84,6 +85,7 @@ const lazyImages = images.slice(6);
       {lazyImages.map((image, index) => (
         <a
           class="gallery-item"
+          data-gallery-item
           style={`--width: ${image.width}; --height: ${image.height};`}
           href={image.src}
           target="_blank"
@@ -108,11 +110,93 @@ const lazyImages = images.slice(6);
 <script>
   import { Fancybox } from "@fancyapps/ui/dist/fancybox/";
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => Fancybox.bind("[data-fancybox]"));
+  const bindFancybox = () => Fancybox.bind("[data-fancybox]");
+
+  const initGalleryReveal = () => {
+    const gallery = document.querySelector<HTMLElement>(".justified-gallery");
+    if (!gallery) return;
+
+    const items = Array.from(
+      gallery.querySelectorAll<HTMLElement>("[data-gallery-item]"),
+    );
+    if (!items.length) return;
+
+    const rowMap = new Map<number, HTMLElement[]>();
+    const rowObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+
+          const rowIndex = Number(entry.target.getAttribute("data-row-index"));
+          const rowItems = rowMap.get(rowIndex);
+          if (!rowItems) continue;
+
+          for (const [index, item] of rowItems.entries()) {
+            item.style.setProperty("--row-stagger", `${index * 90}ms`);
+            item.classList.add("is-visible");
+          }
+
+          rowObserver.unobserve(entry.target);
+        }
+      },
+      {
+        threshold: 0.25,
+        rootMargin: "0px 0px -10% 0px",
+      },
+    );
+
+    const rebuildRows = () => {
+      rowObserver.disconnect();
+      rowMap.clear();
+
+      for (const item of items) {
+        item.classList.remove("is-visible");
+        item.style.removeProperty("--row-stagger");
+      }
+
+      const rows = new Map<number, HTMLElement[]>();
+      for (const item of items) {
+        const rowTop = Math.round(item.offsetTop);
+        const rowItems = rows.get(rowTop) ?? [];
+        rowItems.push(item);
+        rows.set(rowTop, rowItems);
+      }
+
+      Array.from(rows.entries())
+        .sort(([topA], [topB]) => topA - topB)
+        .forEach(([_, rowItems], rowIndex) => {
+          rowMap.set(rowIndex, rowItems);
+          rowItems[0].setAttribute("data-row-index", String(rowIndex));
+          rowObserver.observe(rowItems[0]);
+        });
+    };
+
+    let resizeTimer = 0;
+    const onResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(rebuildRows, 120);
+    };
+
+    rebuildRows();
+    window.addEventListener("resize", onResize, { passive: true });
+
+    const cleanup = () => {
+      window.removeEventListener("resize", onResize);
+      rowObserver.disconnect();
+      window.removeEventListener("load", rebuildRows);
+    };
+
+    window.addEventListener("pagehide", cleanup, { once: true });
+    window.addEventListener("load", rebuildRows, { once: true });
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindFancybox);
   } else {
-    Fancybox.bind("[data-fancybox]");
+    bindFancybox();
   }
+
+  initGalleryReveal();
 </script>
 
 <style>
@@ -138,7 +222,18 @@ const lazyImages = images.slice(6);
     flex-basis: calc(var(--min-height) * (var(--width) / var(--height)));
     aspect-ratio: var(--width) / var(--height);
     overflow: hidden;
-    transition: all 0.05s ease-in-out;
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+    transition:
+      opacity 700ms ease,
+      transform 700ms cubic-bezier(0.22, 0.7, 0.2, 1);
+    transition-delay: var(--row-stagger, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .gallery-item.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 
   .gallery-item img {
@@ -170,6 +265,14 @@ const lazyImages = images.slice(6);
       --f-button-width: 52px;
       --f-button-height: 52px;
       --f-toolbar-padding: 20px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gallery-item {
+      opacity: 1;
+      transform: none;
+      transition: none;
     }
   }
 
