@@ -276,7 +276,7 @@ a:hover {
   gap: 16px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 28px clamp(16px, 4vw, 32px);
+  padding: 18px clamp(16px, 4vw, 32px);
   transition: padding 0.3s ease;
 }
 
@@ -346,8 +346,8 @@ a:hover {
 @media (width <= 639px) {
   .nav {
     /* Increase mobile navbar height */
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
   }
 
   /* All nav icon buttons are 44×44 circles on mobile */
