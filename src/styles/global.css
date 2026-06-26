@@ -86,17 +86,28 @@
 }
 
 /* Dock surface styling lives in CSS to avoid React hydration mismatches */
+/* Shared frosted-glass treatment — used by the palette dropdown, the dock pill
+   and the mobile app grid so they read identically. A theme-aware tint of the
+   current surface PLUS a light frost overlay: opaque enough that content stays
+   crisp, while the white frost lifts the panel off the page on both light and
+   dark themes (a same-colour tint alone would vanish into a matching bg). */
+:root {
+  --frost-bg:
+    linear-gradient(rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.14)),
+    color-mix(in oklab, var(--bg-app) 86%, transparent);
+  --frost-blur: blur(15px) saturate(180%);
+  --frost-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
 .dock-surface {
-  background-color: var(--dock-bg);
-  border-width: 1px;
-  border-style: solid;
-  border-color: var(--dock-border);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.18),
-    0 2px 8px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: var(--frost-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
+  box-shadow: var(--frost-shadow);
 }
 
 /* Reserve the scrollbar gutter so centered content (the navbar) doesn't
@@ -491,15 +502,20 @@ a:hover {
   border-top: 1px solid var(--glass-border);
 }
 
-/* Mobile palette panel opens upward so it doesn't clip out of the menu */
+/* Mobile palette panel drops DOWN from its button (which sits at the bottom of
+   the drawer) so it never covers the nav links/title above it, and anchors to
+   the LEFT — the button is at the far left, so a right-aligned panel would run
+   off the left edge. */
 .palette-wrapper-mobile .palette-panel {
-  top: auto;
-  bottom: calc(100% + 6px);
+  top: calc(100% + 6px);
+  bottom: auto;
+  left: 0;
+  right: auto;
 }
 
 .palette-wrapper-mobile .palette-panel::before {
-  top: auto;
-  bottom: -8px;
+  top: -8px;
+  bottom: auto;
 }
 
 /* Prevent body scroll when menu is open */
@@ -526,18 +542,12 @@ a:hover {
   transform: translateX(-50%);
   z-index: 50;
   border-radius: 18px;
-  background:
-    linear-gradient(
-      180deg,
-      rgb(255 255 255 / 16%) 0%,
-      rgb(255 255 255 / 8%) 30%,
-      rgb(255 255 255 / 4%) 100%
-    ), rgb(16 16 18 / 35%);
-  backdrop-filter: saturate(1.8) blur(18px);
-  box-shadow:
-    0 16px 40px rgb(0 0 0 / 35%),
-    0 2px 8px rgb(0 0 0 / 25%);
-  border: 1px solid rgb(255 255 255 / 18%);
+  /* Same frosted glass as the dock pill + palette dropdown */
+  background: var(--frost-bg);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
+  box-shadow: var(--frost-shadow);
+  border: 1px solid var(--glass-border);
 }
 
 /* Responsive album headers */
@@ -1100,14 +1110,12 @@ a:hover {
   min-width: 176px;
   padding: 6px;
   border-radius: 14px;
-  /* Frosted glass — matches the app windows */
-  background: var(--glass-bg);
-  backdrop-filter: blur(30px) saturate(200%);
-  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  /* Frosted-glass dropdown — shared treatment with the docks (see --frost-*) */
+  background: var(--frost-bg);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
   border: 1px solid var(--glass-border);
-  box-shadow:
-    var(--glass-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: var(--frost-shadow);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1984,17 +1992,21 @@ html.mg-no-select * {
    edge so the centred title stays readable. */
 @media (width <= 760px) {
   .hero-flower {
-    width: clamp(180px, 62vw, 340px);
+    /* Big, lush bouquets that climb well up the left/right edges to fill the
+       lower half of the screen. The title/subtitle sit up in the top third, so
+       the flowers can grow tall (and meet softly near the centre) without ever
+       covering the text. */
+    width: clamp(230px, 74vw, 360px);
     max-width: none;
     opacity: 0.8;
   }
 
   .hero-flower-left {
-    left: clamp(-130px, -18vw, -48px);
+    left: clamp(-90px, -11vw, -40px);
   }
 
   .hero-flower-right {
-    right: clamp(-130px, -18vw, -48px);
+    right: clamp(-90px, -11vw, -40px);
   }
 }
 

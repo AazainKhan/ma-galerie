@@ -28,13 +28,18 @@ export function GooeyText({
     let cooldown = cooldownTime;
     let frame = 0;
 
+    // Cap the blur radius: the original effect let it spike toward 100px, which
+    // is what made the thin serif tear apart / glitch on mobile GPUs. A lower
+    // ceiling keeps the gooey "melt + merge" while staying smooth.
+    const MAX_BLUR = 22;
+
     const setMorph = (fraction: number) => {
       if (text1Ref.current && text2Ref.current) {
-        text2Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
+        text2Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, MAX_BLUR)}px)`;
         text2Ref.current.style.opacity = `${fraction ** 0.4 * 100}%`;
 
         fraction = 1 - fraction;
-        text1Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
+        text1Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, MAX_BLUR)}px)`;
         text1Ref.current.style.opacity = `${fraction ** 0.4 * 100}%`;
       }
     };
@@ -110,7 +115,7 @@ export function GooeyText({
               values="1 0 0 0 0
                       0 1 0 0 0
                       0 0 1 0 0
-                      0 0 0 255 -140"
+                      0 0 0 220 -120"
             />
           </filter>
         </defs>

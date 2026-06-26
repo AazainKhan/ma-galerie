@@ -400,149 +400,164 @@ export default function AlbumManager() {
               )}
             >
               {/* Album Header */}
-              <div
-                className={cn(
-                  "flex p-4 admin-bg-muted",
-                  viewMode === "grid" && !isExpanded
-                    ? "flex-col items-center gap-2 text-center"
-                    : "items-center justify-between",
-                )}
-              >
-                <div
-                  className={cn(
-                    "flex gap-3 min-w-0",
-                    viewMode === "grid" && !isExpanded
-                      ? "flex-col items-center w-full"
-                      : "items-center flex-1",
-                  )}
+              {viewMode === "grid" && !isExpanded ? (
+                /* Compact tile — the whole tile toggles open/closed */
+                <button
+                  type="button"
+                  onClick={() => toggleAlbum(album.id)}
+                  className="w-full flex flex-col items-center gap-2 p-4 text-center admin-bg-muted"
                 >
-                  <button
-                    type="button"
-                    onClick={() => toggleAlbum(album.id)}
-                    className="admin-icon-btn"
-                  >
-                    <ChevronRight
-                      className="w-5 h-5 transition-transform duration-300 ease-out"
-                      style={{
-                        transform: isExpanded
-                          ? "rotate(90deg)"
-                          : "rotate(0deg)",
-                      }}
-                    />
-                  </button>
-
-                  {/* Album Icon with Upload */}
-                  <div className="relative group/icon">
-                    {album.cover_image_src ? (
-                      <div className="w-10 h-10 rounded-full overflow-hidden admin-bg-muted">
-                        <img
-                          src={album.cover_image_src}
-                          alt={album.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="p-2 admin-bg-muted rounded-full">
-                        <Folder
-                          className="w-5 h-5"
-                          style={{ color: "var(--text)", opacity: 0.6 }}
-                        />
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      id={`icon-upload-${album.id}`}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleIconUpload(album.id, file);
-                      }}
-                    />
-                    <label
-                      htmlFor={`icon-upload-${album.id}`}
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover/icon:opacity-100 transition-opacity cursor-pointer rounded-full"
-                      title="Upload album icon"
-                    >
-                      {uploadingIcon === album.id ? (
-                        <Loader2 className="w-4 h-4 text-white animate-spin" />
-                      ) : (
-                        <ImageIcon className="w-4 h-4 text-white" />
-                      )}
-                    </label>
+                  {album.cover_image_src ? (
+                    <div className="w-12 h-12 rounded-full overflow-hidden admin-bg-muted shrink-0">
+                      <img
+                        src={album.cover_image_src}
+                        alt={album.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-3 admin-bg-muted rounded-full shrink-0">
+                      <Folder
+                        className="w-5 h-5"
+                        style={{ color: "var(--text)", opacity: 0.6 }}
+                      />
+                    </div>
+                  )}
+                  <div className="min-w-0 w-full">
+                    <h3 className="font-medium admin-text-primary line-clamp-2">
+                      {album.title}
+                    </h3>
+                    <p className="text-xs admin-text-muted truncate">
+                      {albumImages.length} images
+                    </p>
                   </div>
-
-                  {isEditing ? (
-                    <div className="flex items-center gap-2 flex-1">
-                      <input
-                        type="text"
-                        value={editingTitle}
-                        onChange={(e) => setEditingTitle(e.target.value)}
-                        className="admin-input flex-1 px-2 py-1 rounded"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleRenameAlbum(album.id);
-                          if (e.key === "Escape") {
-                            setEditingAlbum(null);
-                            setEditingTitle("");
-                          }
+                </button>
+              ) : (
+                <div className="flex items-center justify-between p-4 admin-bg-muted">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleAlbum(album.id)}
+                      className="admin-icon-btn"
+                    >
+                      <ChevronRight
+                        className="w-5 h-5 transition-transform duration-300 ease-out"
+                        style={{
+                          transform: isExpanded
+                            ? "rotate(90deg)"
+                            : "rotate(0deg)",
                         }}
                       />
-                      <button
-                        type="button"
-                        onClick={() => handleRenameAlbum(album.id)}
-                        className="admin-icon-btn success"
+                    </button>
+
+                    {/* Album Icon with Upload */}
+                    <div className="relative group/icon">
+                      {album.cover_image_src ? (
+                        <div className="w-10 h-10 rounded-full overflow-hidden admin-bg-muted">
+                          <img
+                            src={album.cover_image_src}
+                            alt={album.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-2 admin-bg-muted rounded-full">
+                          <Folder
+                            className="w-5 h-5"
+                            style={{ color: "var(--text)", opacity: 0.6 }}
+                          />
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        id={`icon-upload-${album.id}`}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleIconUpload(album.id, file);
+                        }}
+                      />
+                      <label
+                        htmlFor={`icon-upload-${album.id}`}
+                        className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover/icon:opacity-100 transition-opacity cursor-pointer rounded-full"
+                        title="Upload album icon"
                       >
-                        <Check className="w-4 h-4" />
-                      </button>
+                        {uploadingIcon === album.id ? (
+                          <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        ) : (
+                          <ImageIcon className="w-4 h-4 text-white" />
+                        )}
+                      </label>
+                    </div>
+
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          className="admin-input flex-1 px-2 py-1 rounded"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleRenameAlbum(album.id);
+                            if (e.key === "Escape") {
+                              setEditingAlbum(null);
+                              setEditingTitle("");
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRenameAlbum(album.id)}
+                          className="admin-icon-btn success"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingAlbum(null);
+                            setEditingTitle("");
+                          }}
+                          className="admin-icon-btn"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium admin-text-primary line-clamp-2">
+                          {album.title}
+                        </h3>
+                        <p className="text-xs admin-text-muted truncate">
+                          /{album.slug} • {albumImages.length} images
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!isEditing && (
                       <button
                         type="button"
                         onClick={() => {
-                          setEditingAlbum(null);
-                          setEditingTitle("");
+                          setEditingAlbum(album.id);
+                          setEditingTitle(album.title);
                         }}
                         className="admin-icon-btn"
                       >
-                        <X className="w-4 h-4" />
+                        <Edit2 className="w-4 h-4" />
                       </button>
-                    </div>
-                  ) : (
-                    <div className="min-w-0 w-full">
-                      <h3 className="font-medium admin-text-primary line-clamp-2">
-                        {album.title}
-                      </h3>
-                      <p className="text-xs admin-text-muted truncate">
-                        /{album.slug} • {albumImages.length} images
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <div
-                  className={cn(
-                    "flex items-center gap-2",
-                    viewMode === "grid" && !isExpanded && "hidden",
-                  )}
-                >
-                  {!isEditing && (
+                    )}
                     <button
                       type="button"
-                      onClick={() => {
-                        setEditingAlbum(album.id);
-                        setEditingTitle(album.title);
-                      }}
-                      className="admin-icon-btn"
+                      onClick={() => handleDelete(album.id)}
+                      className="admin-icon-btn danger"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(album.id)}
-                    className="admin-icon-btn danger"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Album Content (Expanded) — smooth open/close */}
               <div

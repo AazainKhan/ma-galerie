@@ -2,16 +2,35 @@
 
 import { LinkPreview } from "~/components/ui/link-preview";
 
-// Swap these for your own photos any time — one preview image per word.
-const PREVIEW = {
-  life: "https://images.unsplash.com/photo-1718969604981-de826f44ce15?w=440&h=300&fit=crop&auto=format",
-  emotion:
-    "https://images.unsplash.com/photo-1476180814856-a36609db0493?w=440&h=300&fit=crop&auto=format",
-  beauty:
-    "https://images.unsplash.com/photo-1595407660626-db35dcd16609?w=440&h=300&fit=crop&auto=format",
-};
+type Word = { text: string; img: string | null };
 
-export function VisionStatement() {
+const DEFAULT_LEAD = "My vision is to capture the essence of";
+const DEFAULT_WORDS: Word[] = [
+  {
+    text: "life",
+    img: "https://images.unsplash.com/photo-1718969604981-de826f44ce15?w=440&h=300&fit=crop&auto=format",
+  },
+  {
+    text: "emotion",
+    img: "https://images.unsplash.com/photo-1476180814856-a36609db0493?w=440&h=300&fit=crop&auto=format",
+  },
+  {
+    text: "beauty",
+    img: "https://images.unsplash.com/photo-1595407660626-db35dcd16609?w=440&h=300&fit=crop&auto=format",
+  },
+];
+const DEFAULT_CLOSE =
+  "in every frame. Through my lens, I strive to tell stories that resonate, inspire, and connect us to the world and each other.";
+
+export function VisionStatement({
+  lead = DEFAULT_LEAD,
+  words = DEFAULT_WORDS,
+  close = DEFAULT_CLOSE,
+}: {
+  lead?: string;
+  words?: Word[];
+  close?: string;
+}) {
   return (
     <p
       style={{
@@ -23,20 +42,20 @@ export function VisionStatement() {
         textAlign: "center",
       }}
     >
-      My vision is to capture the essence of{" "}
-      <LinkPreview imageSrc={PREVIEW.life} url="/albums">
-        life
-      </LinkPreview>
-      ,{" "}
-      <LinkPreview imageSrc={PREVIEW.emotion} url="/albums">
-        emotion
-      </LinkPreview>
-      , and{" "}
-      <LinkPreview imageSrc={PREVIEW.beauty} url="/albums">
-        beauty
-      </LinkPreview>{" "}
-      in every frame. Through my lens, I strive to tell stories that resonate,
-      inspire, and connect us to the world and each other.
+      {lead}{" "}
+      {words.map((w, i) => (
+        <span key={`${w.text}-${i}`}>
+          <LinkPreview imageSrc={w.img ?? ""} url="/albums">
+            {w.text}
+          </LinkPreview>
+          {i < words.length - 2
+            ? ", "
+            : i === words.length - 2
+              ? ", and "
+              : " "}
+        </span>
+      ))}
+      {close}
     </p>
   );
 }

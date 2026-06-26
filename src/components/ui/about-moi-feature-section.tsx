@@ -2,33 +2,34 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type Feature = { num: string; title: string; text: string; img: string };
+type Feature = { title: string; text: string; img: string };
 
 // Image source for each feature is admin-managed (the "About Moi" album in the
 // admin panel). These Unsplash photos are only fallbacks when no admin image
 // has been uploaded for that slot yet.
 const FEATURES: Feature[] = [
   {
-    num: "01",
     title: "Behind the lens",
     text: "I picked up a borrowed camera years ago and never handed it back. Photography became how I hold onto the things that pass too quickly.",
     img: "https://images.unsplash.com/photo-1718838541476-d04e71caa347?w=900&h=1100&fit=crop&auto=format",
   },
   {
-    num: "02",
     title: "Chasing light",
     text: "Golden hour, blue hour, and the soft grey in between — I follow the light wherever it decides to fall.",
     img: "https://images.unsplash.com/photo-1719411182379-ffd97c1f7ebf?w=900&h=1100&fit=crop&auto=format",
   },
   {
-    num: "03",
     title: "Moments, not poses",
     text: "The frames I love most are the unguarded ones: a glance, a laugh, the quiet pause between heartbeats.",
     img: "https://images.unsplash.com/photo-1685904042960-66242a0ac352?w=900&h=1100&fit=crop&auto=format",
   },
 ];
 
-type AdminImage = { src: string; alt?: string | null };
+type FeatureInput = {
+  title?: string | null;
+  text?: string | null;
+  img?: string | null;
+};
 
 type From = "left" | "right";
 
@@ -115,7 +116,9 @@ function Row({ f, i }: { f: Feature; i: number }) {
         inView={inView}
         className={reversed ? "md:order-2" : ""}
       >
-        <span className="text-sm tracking-[0.3em] opacity-50">{f.num}</span>
+        <span className="text-sm tracking-[0.3em] opacity-50">
+          0{i + 1}
+        </span>
         <h3
           className="mt-2 text-4xl leading-tight font-light sm:text-5xl md:text-6xl"
           style={{ fontFamily: "PPEditorialNew, serif" }}
@@ -151,12 +154,17 @@ function Row({ f, i }: { f: Feature; i: number }) {
   );
 }
 
-export function AboutMoi({ images = [] }: { images?: AdminImage[] }) {
-  // Swap in admin-managed images (by slot order); keep the placeholder if a
-  // slot hasn't been filled in the admin panel yet.
-  const features = FEATURES.map((f, i) => ({
-    ...f,
-    img: images[i]?.src || f.img,
+export function AboutMoi({
+  features: input = [],
+}: {
+  features?: FeatureInput[];
+}) {
+  // Merge admin-managed content (by slot) over the defaults — any field left
+  // blank in the admin panel falls back to the placeholder.
+  const features: Feature[] = FEATURES.map((def, i) => ({
+    title: input[i]?.title || def.title,
+    text: input[i]?.text || def.text,
+    img: input[i]?.img || def.img,
   }));
 
   return (
@@ -181,7 +189,7 @@ export function AboutMoi({ images = [] }: { images?: AdminImage[] }) {
 
         <div className="flex flex-col gap-24 sm:gap-36">
           {features.map((f, i) => (
-            <Row key={f.num} f={f} i={i} />
+            <Row key={f.title} f={f} i={i} />
           ))}
         </div>
       </div>

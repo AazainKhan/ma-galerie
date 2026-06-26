@@ -17,6 +17,7 @@ export const GET: APIRoute = async ({ locals }) => {
         i.src as cover_image_src
       FROM albums a
       LEFT JOIN images i ON a.cover_image_id = i.id
+      WHERE a.slug != 'about-moi'
       ORDER BY a.created_at DESC
     `)
     .all();

@@ -1,10 +1,12 @@
 import { LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
+import AboutManager from "./AboutManager";
 import AlbumManager from "./AlbumManager";
 
 export default function AdminDashboard() {
   const [authorized, setAuthorized] = useState(false);
+  const [tab, setTab] = useState<"albums" | "about">("albums");
 
   useEffect(() => {
     // Simple check if cookie exists
@@ -57,9 +59,27 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tabs */}
+        <div className="admin-toggle-group inline-flex gap-0.5 mb-4">
+          <button
+            type="button"
+            onClick={() => setTab("albums")}
+            className={`admin-toggle-item${tab === "albums" ? " active" : ""}`}
+          >
+            Albums
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("about")}
+            className={`admin-toggle-item${tab === "about" ? " active" : ""}`}
+          >
+            About
+          </button>
+        </div>
+
         {/* Content */}
         <div className="admin-card rounded-xl shadow-sm p-6 min-h-[600px]">
-          <AlbumManager />
+          {tab === "albums" ? <AlbumManager /> : <AboutManager />}
         </div>
       </main>
     </div>

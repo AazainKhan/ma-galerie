@@ -3,89 +3,149 @@ import { AboutMoi } from "~/components/ui/about-moi-feature-section";
 import VisionStatement from "~/components/VisionStatement";
 import BaseLayout from "~/layouts/BaseLayout.astro";
 
-const gearItems = [
-  { name: "Sony A7IV", category: "Body", icon: "📷" },
-  { name: "Sony 35mm f/1.4 GM", category: "Lens", icon: "🔍" },
-  { name: "Sony 85mm f/1.8", category: "Lens", icon: "🔍" },
-  { name: "Peak Design Tripod", category: "Accessory", icon: "📐" },
-];
+// All About-page copy (Ma Galerie intro, Ma Vision, Ma Gear) is editable in the
+// admin "About" tab and stored as JSON in the site_content table; the "About
+// Moi" image blocks live in the about_moi table. Defaults below are the fallback
+// when nothing has been saved yet.
+const galerieDefault = {
+  title: "About Ma Galerie",
+  body: "Welcome to Ma Galerie, a curated collection of photography that captures moments, emotions, and the beauty of the world around us.\n\nThis gallery showcases a variety of photographic styles and subjects, from landscapes and nature to portraits and street photography. Each image tells a story and invites you to see the world through a different lens.\n\nThe gallery is built with modern web technologies to provide a seamless viewing experience across all devices, featuring a responsive design and an intuitive lightbox for exploring images in detail.",
+};
+const visionDefault = {
+  title: "Ma Vision",
+  lead: "My vision is to capture the essence of",
+  words: [
+    {
+      text: "life",
+      img: "https://images.unsplash.com/photo-1718969604981-de826f44ce15?w=440&h=300&fit=crop&auto=format",
+    },
+    {
+      text: "emotion",
+      img: "https://images.unsplash.com/photo-1476180814856-a36609db0493?w=440&h=300&fit=crop&auto=format",
+    },
+    {
+      text: "beauty",
+      img: "https://images.unsplash.com/photo-1595407660626-db35dcd16609?w=440&h=300&fit=crop&auto=format",
+    },
+  ],
+  close:
+    "in every frame. Through my lens, I strive to tell stories that resonate, inspire, and connect us to the world and each other.",
+};
+const gearDefault = {
+  title: "Ma Gear",
+  description:
+    "Behind every great photograph is the right equipment. Here's a look at the gear that helps bring these images to life.",
+  items: [
+    { icon: "📷", name: "Sony A7IV", category: "Body" },
+    { icon: "🔍", name: "Sony 35mm f/1.4 GM", category: "Lens" },
+    { icon: "🔍", name: "Sony 85mm f/1.8", category: "Lens" },
+    { icon: "📐", name: "Peak Design Tripod", category: "Accessory" },
+  ],
+};
 
-// The "About Moi" feature images are managed in the admin panel via a dedicated
-// album (slug "about-moi", hidden from the public albums page). Ensure it exists,
-// then load its images in upload order to fill the feature slots.
 const db = Astro.locals.runtime?.env?.DB;
-let aboutMoiImages: { src: string; alt: string | null }[] = [];
+let aboutMoiFeatures: {
+  title: string | null;
+  text: string | null;
+  img: string | null;
+}[] = [];
+let galerie = galerieDefault;
+let vision = visionDefault;
+let gear = gearDefault;
+
 if (db) {
   try {
     await db
       .prepare(
-        "INSERT OR IGNORE INTO albums (title, slug, description) VALUES ('About Moi', 'about-moi', 'Images for the About Moi section')",
+        `CREATE TABLE IF NOT EXISTS about_moi (
+          slot INTEGER PRIMARY KEY, title TEXT, text TEXT, image_src TEXT
+        )`,
       )
       .run();
     const res = await db
-      .prepare(`
-        SELECT i.src, i.alt
-        FROM images i
-        JOIN albums a ON i.album_id = a.id
-        WHERE a.slug = 'about-moi'
-        ORDER BY i.id ASC
-      `)
+      .prepare(
+        "SELECT slot, title, text, image_src FROM about_moi ORDER BY slot ASC",
+      )
       .all();
-    aboutMoiImages = (res.results ?? []).map((r: any) => ({
-      src: r.src,
-      alt: r.alt,
+    aboutMoiFeatures = (res.results ?? []).map((r: any) => ({
+      title: r.title,
+      text: r.text,
+      img: r.image_src,
     }));
+
+    await db
+      .prepare(
+        "CREATE TABLE IF NOT EXISTS site_content (key TEXT PRIMARY KEY, value TEXT)",
+      )
+      .run();
+    const sc = await db.prepare("SELECT key, value FROM site_content").all();
+    const map: Record<string, any> = {};
+    for (const r of (sc.results ?? []) as any[]) {
+      try {
+        map[r.key] = JSON.parse(r.value);
+      } catch {}
+    }
+    if (map.galerie) galerie = { ...galerieDefault, ...map.galerie };
+    if (map.vision)
+      vision = {
+        ...visionDefault,
+        ...map.vision,
+        words: map.vision.words ?? visionDefault.words,
+      };
+    if (map.gear)
+      gear = {
+        ...gearDefault,
+        ...map.gear,
+        items: map.gear.items ?? gearDefault.items,
+      };
   } catch {
-    aboutMoiImages = [];
+    aboutMoiFeatures = [];
   }
 }
+
+const galerieParagraphs = (galerie.body || "")
+  .split(/\n\n+/)
+  .map((p: string) => p.trim())
+  .filter(Boolean);
 ---
 
 <BaseLayout title="About" description="Learn more about Ma Galerie and my photography journey.">
 	<!-- About header for mobile -->
 	<div class="mobile-header">
-		<h1 style="font-size: clamp(32px, 8vw, 62px); opacity: .8; font-family: PPEditorialNew-Ultralight, sans-serif; font-display: swap; text-align: center; padding: 2rem 0; margin-top: 2rem;">About Ma Galerie</h1>
+		<h1 style="font-size: clamp(32px, 8vw, 62px); opacity: .8; font-family: PPEditorialNew-Ultralight, sans-serif; font-display: swap; text-align: center; padding: 2rem 0; margin-top: 2rem;">{galerie.title}</h1>
 	</div>
 
 	<!-- About content for desktop -->
 	<main class="about-container">
 		<div class="about-content">
-			<h1 class="about-title">About Ma Galerie</h1>
+			<h1 class="about-title">{galerie.title}</h1>
 			<div class="about-text">
-				<p>
-					Welcome to Ma Galerie, a curated collection of photography that captures moments, emotions, and the beauty of the world around us.
-				</p>
-				<p>
-					This gallery showcases a variety of photographic styles and subjects, from landscapes and nature to portraits and street photography. Each image tells a story and invites you to see the world through a different lens.
-				</p>
-				<p>
-					The gallery is built with modern web technologies to provide a seamless viewing experience across all devices, featuring a responsive design and an intuitive lightbox for exploring images in detail.
-				</p>
+				{galerieParagraphs.map((p: string) => <p>{p}</p>)}
 			</div>
 		</div>
 
 		<!-- About Moi + the "I am from" journey (moved from the home page) -->
 		<div class="about-extra">
-			<AboutMoi images={aboutMoiImages} client:visible />
+			<AboutMoi features={aboutMoiFeatures} client:visible />
 		</div>
 
 		<!-- Ma Vision Section -->
 		<section class="vision-section">
   <div class="vision-content">
-    <h2 class="vision-title">Ma Vision</h2>
-    <VisionStatement client:visible />
+    <h2 class="vision-title">{vision.title}</h2>
+    <VisionStatement lead={vision.lead} words={vision.words} close={vision.close} client:visible />
   </div>
 </section>
 
 		<!-- Ma Gear Section -->
 		<section class="gear-section">
 			<div class="gear-content">
-				<h2 class="gear-title">Ma Gear</h2>
+				<h2 class="gear-title">{gear.title}</h2>
 				<p class="gear-description">
-					Behind every great photograph is the right equipment. Here's a look at the gear that helps bring these images to life.
+					{gear.description}
 				</p>
 				<div class="gear-grid">
-					{gearItems.map((item) => (
+					{gear.items.map((item: { icon: string; name: string; category: string }) => (
 						<div class="gear-item">
 							<div class="gear-placeholder">
 								<span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">{item.icon}</span>

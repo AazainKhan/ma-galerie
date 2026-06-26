@@ -121,7 +121,10 @@ const titles = [
     .hero {
       min-height: 100dvh;
       height: 100dvh;
-      padding: 1.5rem 1rem 5rem 1rem;
+      /* Sit the title/subtitle in the upper third so the side bouquets frame
+         the lower half without climbing over the text. */
+      justify-content: flex-start;
+      padding: clamp(90px, 19vh, 190px) 1rem 5rem 1rem;
     }
   }
 

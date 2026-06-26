@@ -1643,22 +1643,23 @@ export default function DockApp() {
         />
       ))}
 
-      {/* ── Desktop files (session only) ── */}
-      {files.map((f) => (
-        <FileIcon key={f.id} file={f} onOpen={() => openFile(f)} />
-      ))}
+      {/* ── Desktop files + sticky notes (session only, desktop view only) ── */}
+      <div className="hidden sm:contents">
+        {files.map((f) => (
+          <FileIcon key={f.id} file={f} onOpen={() => openFile(f)} />
+        ))}
 
-      {/* ── Desktop sticky notes (session only) ── */}
-      {notes.map((n) => (
-        <StickyNote
-          key={n.id}
-          note={n}
-          onChange={(t) => updateNote(n.id, t)}
-          onColor={(c) => setNoteColor(n.id, c)}
-          onNewSticky={addSticky}
-          onClose={() => removeNote(n.id)}
-        />
-      ))}
+        {notes.map((n) => (
+          <StickyNote
+            key={n.id}
+            note={n}
+            onChange={(t) => updateNote(n.id, t)}
+            onColor={(c) => setNoteColor(n.id, c)}
+            onNewSticky={addSticky}
+            onClose={() => removeNote(n.id)}
+          />
+        ))}
+      </div>
 
       {/* ── Desktop dock ── */}
       <div className="hidden sm:block fixed bottom-3 left-1/2 -translate-x-1/2 z-50 min-[1920px]:bottom-5">
