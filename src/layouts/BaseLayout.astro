@@ -35,6 +35,24 @@ const initialPalette = VALID_PALETTES.includes(paletteCookie ?? "")
   ? paletteCookie
   : undefined;
 
+// --bg-app per palette in light/dark, used for the iOS Safari status-bar colour
+// (<meta theme-color>). Rendered server-side with prefers-color-scheme media
+// queries so Safari — which only honours theme-color present in the source HTML,
+// not JS-set ones — gets the right colour for the device appearance.
+const PALETTE_BG: Record<string, { light: string; dark: string }> = {
+  default: { light: "#ffffff", dark: "#151515" },
+  "regal-navy": { light: "#faf0ca", dark: "#0d3b66" },
+  indigo: { light: "#f5eeff", dark: "#42047e" },
+  "charcoal-blue": { light: "#e8f4f3", dark: "#264653" },
+  honeydew: { light: "#ebf5df", dark: "#1a2e16" },
+  "powder-blue": { light: "#dce8f8", dark: "#103783" },
+  "bright-amber": { light: "#f8c828", dark: "#003d30" },
+};
+const tcEntry = PALETTE_BG[initialPalette ?? "default"] ?? PALETTE_BG.default;
+// When an explicit theme cookie exists, also emit a non-media override so a
+// manual toggle that differs from the device appearance still matches.
+const tcExplicit = initialTheme ? tcEntry[initialTheme] : null;
+
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const pageTitle = Astro.url.pathname === "/" ? title : `${title} · ${siteName}`;
 
@@ -73,33 +91,16 @@ const showGridGlow = !albumsDesktopPath;
           } else {
             delete r.dataset.palette;
           }
-
-          // ── iOS Safari status-bar colour ───────────────────────────────
-          // Set it synchronously, before first paint, from the resolved
-          // theme+palette. Safari reads theme-color once at load and ignores
-          // later JS updates, so doing it here (not after CSS loads) is what
-          // makes the bar match instead of flashing white.
-          var BG = {
-            'default':       { light: '#ffffff', dark: '#151515' },
-            'regal-navy':    { light: '#faf0ca', dark: '#0d3b66' },
-            'indigo':        { light: '#f5eeff', dark: '#42047e' },
-            'charcoal-blue': { light: '#e8f4f3', dark: '#264653' },
-            'honeydew':      { light: '#ebf5df', dark: '#1a2e16' },
-            'powder-blue':   { light: '#dce8f8', dark: '#103783' },
-            'bright-amber':  { light: '#f8c828', dark: '#003d30' },
-          };
-          var entry = BG[r.dataset.palette] || BG['default'];
-          var tc = document.querySelector('meta[name="theme-color"]');
-          if (!tc) {
-            tc = document.createElement('meta');
-            tc.setAttribute('name', 'theme-color');
-            document.head.appendChild(tc);
-          }
-          tc.setAttribute('content', entry[theme === 'dark' ? 'dark' : 'light']);
         } catch (_) {}
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* iOS Safari status-bar colour. Server-rendered (Safari ignores JS-set
+        theme-color). The media-query pair follows the device appearance; the
+        explicit one (if a theme cookie exists) overrides for a manual toggle. */}
+    <meta name="theme-color" content={tcEntry.light} media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content={tcEntry.dark} media="(prefers-color-scheme: dark)" />
+    {tcExplicit && <meta name="theme-color" content={tcExplicit} />}
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalURL} />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>" />
@@ -303,22 +304,23 @@ const showGridGlow = !albumsDesktopPath;
       const mobileThemeBtn = document.getElementById("theme-toggle-mobile");
       const themeButtons = [desktopThemeBtn, mobileThemeBtn].filter(Boolean);
 
-      // Keep the iOS Safari status-bar colour in sync with the actual rendered
-      // page background (resolves the theme + palette to a concrete colour).
-      // Read <html> — the page background lives there now and <body> is
-      // transparent, so reading body would give a transparent (white) bar.
+      // Browsers that DO honour JS theme-color (Chrome, etc.): keep a single
+      // non-media override meta in sync with the actual rendered background, so
+      // a manual theme/palette toggle updates the bar immediately. iOS Safari
+      // ignores this and uses the server-rendered media-query metas instead.
       function syncThemeColor() {
         try {
           const c = getComputedStyle(document.documentElement).backgroundColor;
-          let meta = document.querySelector('meta[name="theme-color"]');
+          if (!c || c === "rgba(0, 0, 0, 0)" || c === "transparent") return;
+          let meta = document.querySelector(
+            'meta[name="theme-color"]:not([media])',
+          );
           if (!meta) {
             meta = document.createElement("meta");
             meta.setAttribute("name", "theme-color");
             document.head.appendChild(meta);
           }
-          if (c && c !== "rgba(0, 0, 0, 0)" && c !== "transparent") {
-            meta.setAttribute("content", c);
-          }
+          meta.setAttribute("content", c);
         } catch (_) {}
       }
 
