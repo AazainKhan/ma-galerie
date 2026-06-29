@@ -1626,6 +1626,12 @@ html.mg-no-select * {
   overflow: hidden;
 }
 
+/* Selected (click or marquee) — blue ring like the desktop folders. */
+.sticky-note.selected {
+  outline: 2.5px solid #0a84ff;
+  outline-offset: 2px;
+}
+
 .sticky-note-bar {
   position: relative;
   height: 22px;

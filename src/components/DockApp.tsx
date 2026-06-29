@@ -1390,13 +1390,59 @@ export default function DockApp() {
   const [openApps, setOpenApps] = useState<Set<string>>(new Set());
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState>(null);
   const [windows, setWindows] = useState<WindowState[]>([]);
-  // Seed two stickies (different colors) on every load of the desktop.
+  // Seed two stickies (different colors) on every load of the desktop, spread
+  // apart so they don't sit on top of each other.
   const [notes, setNotes] = useState<NoteState[]>(() => [
-    { id: "seed-1", text: "", x: 44, y: 128, color: "yellow" },
-    { id: "seed-2", text: "", x: 80, y: 168, color: "pink" },
+    { id: "seed-1", text: "", x: 40, y: 110, color: "yellow" },
+    { id: "seed-2", text: "", x: 150, y: 400, color: "pink" },
   ]);
   const [files, setFiles] = useState<FileState[]>([]);
   const topZ = useRef(200);
+
+  // Selection highlight for desktop files + stickies, mirroring the folder
+  // selection. The marquee (rubber-band) lives in MacDesktop (a separate
+  // island) and broadcasts its rectangle via a window event; folder/file
+  // selections clear each other through paired events.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const selectOne = useCallback((id: string) => {
+    setSelectedIds(new Set([id]));
+    window.dispatchEvent(new CustomEvent("mg-deselect-folders"));
+  }, []);
+  useEffect(() => {
+    const onMarquee = (e: Event) => {
+      const r = (
+        e as CustomEvent<{
+          left: number;
+          top: number;
+          right: number;
+          bottom: number;
+        }>
+      ).detail;
+      if (!r) return;
+      const hits = new Set<string>();
+      for (const el of document.querySelectorAll<HTMLElement>(
+        "[data-desk-id]",
+      )) {
+        const b = el.getBoundingClientRect();
+        if (
+          !(r.right < b.left || r.left > b.right || r.bottom < b.top || r.top > b.bottom)
+        ) {
+          const id = el.getAttribute("data-desk-id");
+          if (id) hits.add(id);
+        }
+      }
+      setSelectedIds(hits);
+    };
+    const clear = () => setSelectedIds(new Set());
+    window.addEventListener("mg-marquee", onMarquee);
+    window.addEventListener("mg-deselect-all", clear);
+    window.addEventListener("mg-deselect-files", clear);
+    return () => {
+      window.removeEventListener("mg-marquee", onMarquee);
+      window.removeEventListener("mg-deselect-all", clear);
+      window.removeEventListener("mg-deselect-files", clear);
+    };
+  }, []);
 
   // Stickies (dock app): spawn / edit / remove session-only notes.
   const addSticky = useCallback(() => {
@@ -1435,14 +1481,23 @@ export default function DockApp() {
       const name = detail?.name?.trim() || fallback;
       setFiles((prev) => {
         const i = prev.length;
+        // Drop new files in a column just left of the folders (queried live so
+        // it adapts to how many folders there are / where they've been moved),
+        // top-down then wrapping — not in the top-left corner.
+        let folderLeft = window.innerWidth - 120;
+        for (const el of document.querySelectorAll<HTMLElement>(
+          ".desktop-icon[data-slug]",
+        )) {
+          folderLeft = Math.min(folderLeft, el.getBoundingClientRect().left);
+        }
         return [
           ...prev,
           {
             id: `${Date.now()}`,
             name,
             text,
-            x: 24 + Math.floor(i / 5) * 110,
-            y: 110 + (i % 5) * 118,
+            x: Math.max(20, folderLeft - 100 - Math.floor(i / 4) * 110),
+            y: 130 + (i % 4) * 118,
           },
         ];
       });
@@ -1646,7 +1701,13 @@ export default function DockApp() {
       {/* ── Desktop files + sticky notes (session only, desktop view only) ── */}
       <div className="hidden sm:contents">
         {files.map((f) => (
-          <FileIcon key={f.id} file={f} onOpen={() => openFile(f)} />
+          <FileIcon
+            key={f.id}
+            file={f}
+            onOpen={() => openFile(f)}
+            selected={selectedIds.has(f.id)}
+            onSelect={() => selectOne(f.id)}
+          />
         ))}
 
         {notes.map((n) => (
@@ -1657,6 +1718,8 @@ export default function DockApp() {
             onColor={(c) => setNoteColor(n.id, c)}
             onNewSticky={addSticky}
             onClose={() => removeNote(n.id)}
+            selected={selectedIds.has(n.id)}
+            onSelect={() => selectOne(n.id)}
           />
         ))}
       </div>
@@ -2154,12 +2217,16 @@ function StickyNote({
   onColor,
   onNewSticky,
   onClose,
+  selected,
+  onSelect,
 }: {
   note: NoteState;
   onChange: (text: string) => void;
   onColor: (color: string) => void;
   onNewSticky: () => void;
   onClose: () => void;
+  selected: boolean;
+  onSelect: () => void;
 }) {
   const x = useMotionValue(note.x);
   const y = useMotionValue(note.y);
@@ -2183,7 +2250,9 @@ function StickyNote({
         height: 220,
         background: STICKY_COLORS[note.color] ?? STICKY_COLORS.yellow,
       }}
-      className="sticky-note"
+      className={`sticky-note${selected ? " selected" : ""}`}
+      data-desk-id={note.id}
+      onPointerDownCapture={onSelect}
     >
       <div
         className="sticky-note-bar"
@@ -2289,7 +2358,17 @@ function FileViewer({ text }: { text: string }) {
 }
 
 // ─── FileIcon (session-only file saved on the virtual desktop) ──
-function FileIcon({ file, onOpen }: { file: FileState; onOpen: () => void }) {
+function FileIcon({
+  file,
+  onOpen,
+  selected,
+  onSelect,
+}: {
+  file: FileState;
+  onOpen: () => void;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   const x = useMotionValue(file.x);
   const y = useMotionValue(file.y);
   const lastTap = useRef(0);
@@ -2315,7 +2394,9 @@ function FileIcon({ file, onOpen }: { file: FileState; onOpen: () => void }) {
         width: 90,
       }}
       whileDrag={{ zIndex: 200, scale: 1.04 }}
-      className="desktop-icon"
+      className={`desktop-icon${selected ? " selected" : ""}`}
+      data-desk-id={file.id}
+      onPointerDown={onSelect}
       onTap={handleTap}
       title="Double-click to open"
     >

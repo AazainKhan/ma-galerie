@@ -109,6 +109,7 @@ export default function MacDesktop({ albums }: { albums: Album[] }) {
       // Don't clear a fresh marquee selection on the click that follows the drag.
       if (Date.now() - lastMarqueeEnd > 250 && !t.closest(".desktop-icon")) {
         setSelectedSlugs(new Set());
+        window.dispatchEvent(new CustomEvent("mg-deselect-all"));
       }
       if (!t.closest(".ctx-menu")) setCtxMenu(null);
     };
@@ -182,6 +183,13 @@ export default function MacDesktop({ albums }: { albums: Album[] }) {
           }
         }
         setSelectedSlugs(hits);
+        // Broadcast the rectangle so the dock island can select its files +
+        // stickies (they live in a separate React tree).
+        window.dispatchEvent(
+          new CustomEvent("mg-marquee", {
+            detail: { left, top, right, bottom },
+          }),
+        );
       };
       const onUp = () => {
         document.removeEventListener("pointermove", onMove);
@@ -194,15 +202,19 @@ export default function MacDesktop({ albums }: { albums: Album[] }) {
       document.addEventListener("pointermove", onMove);
       document.addEventListener("pointerup", onUp);
     };
+    // A file/sticky was selected in the dock island — clear the folders.
+    const handleDeselectFolders = () => setSelectedSlugs(new Set());
     document.addEventListener("click", handleClick);
     document.addEventListener("keydown", handleKey);
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("mg-deselect-folders", handleDeselectFolders);
     return () => {
       document.removeEventListener("click", handleClick);
       document.removeEventListener("keydown", handleKey);
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("mg-deselect-folders", handleDeselectFolders);
     };
   }, []);
 
@@ -227,9 +239,11 @@ export default function MacDesktop({ albums }: { albums: Album[] }) {
           album={album}
           initialPos={savedPositions[album.slug] ?? layout[i] ?? { x: 0, y: 0 }}
           selected={selectedSlugs.has(album.slug)}
-          onSelect={(slug) =>
-            setSelectedSlugs(slug ? new Set([slug]) : new Set())
-          }
+          onSelect={(slug) => {
+            setSelectedSlugs(slug ? new Set([slug]) : new Set());
+            if (slug)
+              window.dispatchEvent(new CustomEvent("mg-deselect-files"));
+          }}
           onContextMenu={(x, y) => {
             const inMulti =
               selectedSlugs.has(album.slug) && selectedSlugs.size > 1;
