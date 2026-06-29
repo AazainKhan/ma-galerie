@@ -1425,7 +1425,12 @@ export default function DockApp() {
       )) {
         const b = el.getBoundingClientRect();
         if (
-          !(r.right < b.left || r.left > b.right || r.bottom < b.top || r.top > b.bottom)
+          !(
+            r.right < b.left ||
+            r.left > b.right ||
+            r.bottom < b.top ||
+            r.top > b.bottom
+          )
         ) {
           const id = el.getAttribute("data-desk-id");
           if (id) hits.add(id);
@@ -1480,24 +1485,41 @@ export default function DockApp() {
       const fallback = `${firstLine.replace(/[^\w\- ]+/g, "").trim() || "Untitled"}.txt`;
       const name = detail?.name?.trim() || fallback;
       setFiles((prev) => {
-        const i = prev.length;
-        // Drop new files in a column just left of the folders (queried live so
-        // it adapts to how many folders there are / where they've been moved),
-        // top-down then wrapping — not in the top-left corner.
-        let folderLeft = window.innerWidth - 120;
-        for (const el of document.querySelectorAll<HTMLElement>(
+        const fi = prev.length;
+        // Continue the SAME grid the folders use (columns down the right edge),
+        // dropping files into the next free slots so they sit flush with the
+        // folders — filling the partial column first, then wrapping left.
+        // (Mirrors computeLayout in MacDesktop.)
+        const COL = 110;
+        const ROW = 118;
+        const EDGE = 8;
+        const TOP_GAP = 12;
+        const DOCK_RESERVE = 128;
+        const FOLDER_H = 124;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const headerH =
+          document.querySelector(".site-header")?.getBoundingClientRect()
+            .height ?? 90;
+        const top = headerH + TOP_GAP;
+        const rowsPerCol = Math.max(
+          1,
+          Math.floor((vh - DOCK_RESERVE - top - FOLDER_H) / ROW) + 1,
+        );
+        const folderCount = document.querySelectorAll(
           ".desktop-icon[data-slug]",
-        )) {
-          folderLeft = Math.min(folderLeft, el.getBoundingClientRect().left);
-        }
+        ).length;
+        const slot = folderCount + fi;
+        const col = Math.floor(slot / rowsPerCol);
+        const row = slot % rowsPerCol;
         return [
           ...prev,
           {
             id: `${Date.now()}`,
             name,
             text,
-            x: Math.max(20, folderLeft - 100 - Math.floor(i / 4) * 110),
-            y: 130 + (i % 4) * 118,
+            x: vw - (col + 1) * COL - EDGE,
+            y: top + row * ROW,
           },
         ];
       });
