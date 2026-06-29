@@ -123,12 +123,50 @@ html {
     linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
   background-size: 24px 24px;
-  background-attachment: fixed;
+  /* scroll (not fixed): background-attachment:fixed on the root is broken on
+     iOS Safari — it paints into a viewport-sized buffer that doesn't repaint on
+     theme change (stale colour strip) and doesn't extend on pinch-zoom (gap on
+     the right). Desktop re-enables fixed below so the cursor glow stays aligned. */
+  background-attachment: scroll;
+}
+
+/* Mouse devices only: pin the grid so it aligns with the cursor-tracked glow. */
+@media (hover: hover) and (pointer: fine) {
+  html {
+    background-attachment: fixed;
+  }
 }
 
 body {
   color: var(--text);
   font-family: var(--font);
+}
+
+/* Frosted scrim shown behind the open mobile nav menu so the menu is in focus.
+   Sits below the header (which rises to z-index 10000 when the menu is open) but
+   above page content. Clicking it closes the menu (handled by the outside-click
+   listener). Desktop never opens the mobile menu, so it's hidden there. */
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  background: color-mix(in oklab, var(--bg-app) 35%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+
+.menu-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (width >= 640px) {
+  .menu-backdrop {
+    display: none;
+  }
 }
 
 /* Gooey morphing hero title (home page) — styles reach the React island */
@@ -158,6 +196,14 @@ body {
   /* behind all page content (above only the base body grid) */
   z-index: -1;
   pointer-events: none;
+}
+
+/* It's a cursor effect — on touch devices there's no pointer to follow, and its
+   fixed-attachment grid is mis-painted by iOS Safari, so hide it there. */
+@media (hover: none), (pointer: coarse) {
+  .grid-glow {
+    display: none;
+  }
 }
 
 /* the same 24px grid as the body, just a touch stronger, softly revealed around
