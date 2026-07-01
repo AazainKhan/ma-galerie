@@ -150,17 +150,33 @@ body {
   position: fixed;
   inset: 0;
   z-index: 9990;
-  background: color-mix(in oklab, var(--bg-app) 35%, transparent);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  backdrop-filter: blur(10px) saturate(140%);
-  opacity: 0;
+  /* Keep opacity at 1 and animate the blur radius + tint instead. iOS Safari
+     drops backdrop-filter while an element's opacity is transitioning (the blur
+     flashes then vanishes), so we never touch opacity here. visibility toggles
+     the layer (instant on open, delayed to the end on close). */
+  background: color-mix(in oklab, var(--bg-app) 0%, transparent);
+  -webkit-backdrop-filter: blur(0) saturate(100%);
+  backdrop-filter: blur(0) saturate(100%);
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.28s ease;
+  transition:
+    background 0.3s ease,
+    -webkit-backdrop-filter 0.3s ease,
+    backdrop-filter 0.3s ease,
+    visibility 0s linear 0.3s;
 }
 
 .menu-backdrop.open {
-  opacity: 1;
+  background: color-mix(in oklab, var(--bg-app) 35%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+  visibility: visible;
   pointer-events: auto;
+  transition:
+    background 0.3s ease,
+    -webkit-backdrop-filter 0.3s ease,
+    backdrop-filter 0.3s ease,
+    visibility 0s;
 }
 
 @media (width >= 640px) {
