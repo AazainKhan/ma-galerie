@@ -232,7 +232,7 @@ const showGridGlow = !albumsDesktopPath;
       </nav>
 
       <!-- Mobile menu panel -->
-      <div id="mobile-menu" class="mobile-menu" hidden>
+      <div id="mobile-menu" class="mobile-menu">
         <ul class="links" role="list">
           <li><a href="/">Home</a></li>
           <li><a href="/albums">Albums</a></li>
@@ -423,7 +423,6 @@ const showGridGlow = !albumsDesktopPath;
         if (!menuBtn || !mobileMenu) return;
         menuBtn.setAttribute("aria-expanded", String(open));
         mobileMenu.classList.toggle("open", open);
-        if (open) mobileMenu.removeAttribute("hidden"); else mobileMenu.setAttribute("hidden", "");
         menuBackdrop?.classList.toggle("open", open);
         document.documentElement.classList.toggle("no-scroll", open);
         document.querySelector(".site-header")?.classList.toggle("menu-open", open);

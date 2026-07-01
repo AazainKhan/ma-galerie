@@ -514,18 +514,28 @@ a:hover {
   display: grid;
   grid-template-rows: 1fr auto;
   gap: 12px;
-  transform: translateY(-8px);
+  transform: translateY(-10px);
   opacity: 0;
+  /* visibility (not display:none) keeps the panel in the layout so it can
+     actually transition open/closed instead of flashing. Delayed to the end on
+     close so the fade-out is visible; instant on open. */
+  visibility: hidden;
   pointer-events: none;
   transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+    opacity 0.26s ease,
+    transform 0.26s cubic-bezier(0.22, 0.7, 0.2, 1),
+    visibility 0s linear 0.26s;
 }
 
 .mobile-menu.open {
   opacity: 1;
   transform: translateY(0);
+  visibility: visible;
   pointer-events: auto;
+  transition:
+    opacity 0.26s ease,
+    transform 0.26s cubic-bezier(0.22, 0.7, 0.2, 1),
+    visibility 0s;
 }
 
 .mobile-menu .links {
