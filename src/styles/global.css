@@ -321,7 +321,15 @@ a:hover {
   background-color: var(--bg);
   background-image: linear-gradient(var(--header-bg), var(--header-bg));
   border-bottom: 1px solid color-mix(in oklab, var(--text) 12%, transparent);
-  transition: all 0.3s ease;
+  /* Explicit properties, NOT `all` — `all` would transition z-index too, so on
+     menu-open the header's z-index would slowly ramp 50 → 10000 and, until it
+     passed the backdrop (9990), the blur would sit on top of the nav. z-index
+     must snap instantly. */
+  transition:
+    background-color 0.3s ease,
+    background-image 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 /* When mobile menu is open, raise header above all app windows (which start at z-index 201) */
