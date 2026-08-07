@@ -52,7 +52,7 @@
     "typescript": "^5.9.2"
   },
   "devDependencies": {
-    "@astrojs/cloudflare": "^12.6.12",
+    "@astrojs/cloudflare": "^12.6.13",
     "@biomejs/biome": "^2.1.4",
     "@tailwindcss/postcss": "^4.1.11",
     "@types/react-dom": "^18.0.11",
